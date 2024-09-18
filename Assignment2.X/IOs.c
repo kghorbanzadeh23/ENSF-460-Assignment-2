@@ -34,12 +34,12 @@ void IOinit(){
     CNPU1bits.CN0PUE = 1;
           
     //Set clock to 500 kHz
-    newClk(500);
+    newClk(32);
 }
 
 void IOcheck(){
      //Checks if more than one button is pushed, if so keep light on
-        if((PB3 == 0 && PB1 == 0) || (PB3 == 0 && PB2 == 0)|| (PB1 == 0 && PB2 == 0)){
+        if(PB1 == 0 && PB2 == 0){
             //Keep light on
             LEDOUT = 1;
         } 
@@ -73,5 +73,9 @@ void IOcheck(){
         else {
             //If no buttons are pushed turn off LED
             LEDOUT = 0;
+            
+            //Set clock lower to just for button checking.
+            newClk(32);
+
         }
 }

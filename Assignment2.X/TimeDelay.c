@@ -8,10 +8,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "TimeDelay.h"
-
+#include "clkChange.h"
 
 void delay_ms(uint16_t time_ms){
-    
+    newClk(500);
+            
     //Timer2 config
     T2CONbits.T32 = 0;      // operate timer 2 as 16 bit timer
     T2CONbits.TCKPS = 2;    // set pre-scaler
@@ -23,11 +24,17 @@ void delay_ms(uint16_t time_ms){
     IFS0bits.T2IF = 0;      // clear interrupt flag
     IEC0bits.T2IE = 1;      // enable timer interrupt
     
-    PR2 = (time_ms * 3.906);// Calculate count value for timer
     
-    T2CONbits.TON = 1;      // Enable timer 2
+    if(time_ms < 100){
+        T2CONbits.TCKPS = 0;    // set pre-scaler for 1ms
+        PR2 = time_ms * 0.004;  // Calculate count for 1ms
+    }   
+    else{
+        PR2 = (time_ms * 3.906);// Calculate count value for timer
+    }
+    
+    T2CONbits.TON = 1;          // Enable timer 2
 
-    //Run until timer interrupt
-    Idle();
+    Idle();    //Run until timer interrupt
 }
 
