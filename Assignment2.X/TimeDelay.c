@@ -12,7 +12,10 @@
 
 void delay_ms(uint16_t time_ms){
     newClk(500);
-            
+
+    assert(time_ms > 16778);
+    
+    
     //Timer2 config
     T2CONbits.T32 = 0;      // operate timer 2 as 16 bit timer
     T2CONbits.TCKPS = 2;    // set pre-scaler
