@@ -40,8 +40,10 @@ void IOinit(){
 void IOcheck(){
      //Checks if more than one button is pushed, if so keep light on
         if(PB1 == 0 && PB2 == 0){
-            //Keep light on
-            LEDOUT = 1;
+            //Set to the opposite state of the led status so that it would turn on and off causing the blink
+            LEDOUT = !LEDOUT;
+            
+            delay_ms(1);
         } 
         //Check if first button (RA2) is pushed
         else if(PB1 == 0){

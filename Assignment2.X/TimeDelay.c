@@ -6,15 +6,17 @@
  */
 
 #include <stdio.h>
+#include <assert.h>
 #include <stdlib.h>
 #include "TimeDelay.h"
 #include "clkChange.h"
 
 void delay_ms(uint16_t time_ms){
     newClk(500);
-
-    assert(time_ms > 16778);
     
+    if(time_ms > 16778){
+        time_ms = 16778;
+    }
     
     //Timer2 config
     T2CONbits.T32 = 0;      // operate timer 2 as 16 bit timer
@@ -30,14 +32,14 @@ void delay_ms(uint16_t time_ms){
     
     if(time_ms < 100){
         T2CONbits.TCKPS = 0;    // set pre-scaler for 1ms
-        PR2 = time_ms * 0.004;  // Calculate count for 1ms
+        PR2 = time_ms * 4;  // Calculate count for 1ms
     }   
     else{
         PR2 = (time_ms * 3.906);// Calculate count value for timer
     }
-    
-    T2CONbits.TON = 1;          // Enable timer 2
+    TMR2 = 0;
 
+    T2CONbits.TON = 1;          // Enable timer 2
     Idle();    //Run until timer interrupt
 }
 
