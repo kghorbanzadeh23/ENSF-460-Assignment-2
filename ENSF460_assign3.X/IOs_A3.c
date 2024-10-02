@@ -21,7 +21,6 @@
 uint16_t PB1_event;
 uint16_t PB2_event;
 uint16_t PB3_event;
-uint16_t Message_Sent;
 
 void IOinit(){
     
@@ -62,20 +61,23 @@ void IOinit(){
     PB2_event = 0;
     PB3_event = 0;
 
-    Message_Sent = 0;
     IPC4bits.CNIP = 6;
     IFS1bits.CNIF = 0;
     IEC1bits.CNIE = 1;
     
     
     TMR2 = 0;
+    TMR3 = 0;
 }
 
 void IOcheck(){
         Idle();
         T3CONbits.TON = 1;
-
-        Idle();
+        TimerWait:
+        TMR3 = 1;
+        while(TMR3){
+            Idle();
+        }
         if (PB1_event) {
             
             //delay_ms(100);
@@ -88,7 +90,6 @@ void IOcheck(){
             else if (PB2_event && PB1_event) {
             Disp2String("PB1 and PB2 pressed\n\r");
             LEDOn();
-            Idle();
             }
             else if (PB3_event && PB1_event) {
             Disp2String("PB1 and PB3 pressed\n\r");
@@ -106,7 +107,6 @@ void IOcheck(){
                 T3CONbits.TON = 1;
 
             }
-            Message_Sent = 1;
         }
         
         else if (PB2_event) {
@@ -129,8 +129,7 @@ void IOcheck(){
             LEDOn();
             }
             else{
-                if(!Message_Sent)
-                    Disp2String("PB2 event\n\r");
+                Disp2String("PB2 event\n\r");
                 while(!TMR2){
                     LEDOUT = !LEDOUT;
                     T3CONbits.TON = 0;
@@ -139,7 +138,6 @@ void IOcheck(){
                 }
                 T3CONbits.TON = 1;
             }
-            Message_Sent = 1;
         }
         
         else if (PB3_event) {
@@ -171,17 +169,19 @@ void IOcheck(){
                 }
                 T3CONbits.TON = 1;
             }
-            Message_Sent = 1;
         }
         else{
             Disp2String("Nothing pressed\n\r");
-            Message_Sent = 1;
         }
-        LEDOUT = 0;
-        T3CONbits.TON = 0;
+        
+        if(!PB1_event && !PB2_event && !PB3_event)
+        {
+            Disp2String("Nothing pressed\n\r");
 
-
-        //delay_ms(100);
+            LEDOUT = 0;
+            T3CONbits.TON = 0;
+            goto TimerWait;
+        }
     }
     
 
@@ -199,20 +199,35 @@ void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
     }
     else{
         PB1_event = 0;
-        Message_Sent = 0;
     }
     if(PB2 == 0){
         PB2_event = 1;
     } 
     else{
         PB2_event = 0;
-        Message_Sent = 0;
     }
     if(PB3 == 0){
         PB3_event = 1;
     }
     else{
         PB3_event = 0;
-        Message_Sent = 0;
     }
 }
+
+// Timer 2 interrupt subroutine
+void __attribute__((interrupt, no_auto_psv)) _T2Interrupt(void){
+    //Don't forget to clear the timer 2 interrupt flag!
+    T2CONbits.TON = 0;          // Enable timer 2
+
+    IFS0bits.T2IF = 0;
+    TMR2 = 0;
+}
+
+// Timer 3 interrupt subroutine
+void __attribute__((interrupt, no_auto_psv)) _T3Interrupt(void){
+    //Don't forget to clear the timer 3 interrupt flag!
+    IFS0bits.T3IF = 0;
+//    LATBbits.LATB8 = 1;
+    TMR3 = 0;
+}
+

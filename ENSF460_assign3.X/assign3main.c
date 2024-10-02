@@ -89,20 +89,3 @@ int main(void) {
     }
     return 0;
 }
-
-
-// Timer 2 interrupt subroutine
-void __attribute__((interrupt, no_auto_psv)) _T2Interrupt(void){
-    //Don't forget to clear the timer 2 interrupt flag!
-    T2CONbits.TON = 0;          // Enable timer 2
-
-    IFS0bits.T2IF = 0;
-    TMR2 = 0;
-}
-
-void __attribute__((interrupt, no_auto_psv)) _T3Interrupt(void){
-    //Don't forget to clear the timer 3 interrupt flag!
-    IFS0bits.T3IF = 0;
-//    LATBbits.LATB8 = 1;
-}
-
