@@ -67,7 +67,6 @@ void IOinit(){
     
     
     TMR2 = 0;
-    TMR3 = 0;
 }
 
 void IOcheck(){
