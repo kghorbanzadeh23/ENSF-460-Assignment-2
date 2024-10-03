@@ -1,5 +1,5 @@
 /* 
- * File:   IOs_A3.c
+ * File:   IOs.c
  * Author: Spiro, Kamand, Hutton
  *
  * Created on September 16, 2024, 3:55 PM
@@ -75,10 +75,12 @@ void IOinit(){
     PB2_event = 0;
     PB3_event = 0;
 
+    //Enable Interrupt
     IPC4bits.CNIP = 6;
-    IFS1bits.CNIF = 0;
-    IEC1bits.CNIE = 1;
+    IFS1bits.CNIF = 0;  //Clear Flag
+    IEC1bits.CNIE = 1;  
     
+    //Default state
     state = NOTHING_PRESSED;
     Blinking_Interval = 0;
 
@@ -117,12 +119,12 @@ void IOcheck(){
             break;
             
         case FIND_BUTTONS: 
-            T3CONbits.TON = 1;
+            T3CONbits.TON = 1;  //Turn timer on to prevent debounce
 
             Idle();
             
             if(state == BUTTON_PRESSED){
-                break;
+                break;  //If debounce occurs or new button is pressed leave this case
             }
             
             if (!(PB1_event || PB2_event || PB3_event)){
@@ -178,29 +180,22 @@ void IOcheck(){
 void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
          //Don't forget to clear the CN interrupt flag!
     state = BUTTON_PRESSED;
-
     T2CONbits.TON = 0;
-
     IFS1bits.CNIF = 0;
 }
 
 // Timer 2 interrupt subroutine
 void __attribute__((interrupt, no_auto_psv)) _T2Interrupt(void){
-    //Don't forget to clear the timer 2 interrupt flag!
-    //Disp2String("PB1 event\n\r");
-    TMR2 = 0;
-
-    IFS0bits.T2IF = 0;
-    T2CONbits.TON = 0;
+    IFS0bits.T2IF = 0;  //Clear Flag
+    T2CONbits.TON = 0;  //Disable Timer2
 
 }
 
 // Timer 3 interrupt subroutine
 void __attribute__((interrupt, no_auto_psv)) _T3Interrupt(void){
     //Don't forget to clear the timer 3 interrupt flag!
-    IFS0bits.T3IF = 0;
-//    LATBbits.LATB8 = 1;
-    T3CONbits.TON = 0;
+    IFS0bits.T3IF = 0;  //Clear flag
+    T3CONbits.TON = 0;  //Disable Timer3
 
     TMR3 = 0;
 }

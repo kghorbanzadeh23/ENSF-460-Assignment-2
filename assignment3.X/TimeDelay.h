@@ -1,3 +1,10 @@
+/*
+ * File:  TimeDelay.h
+ * Author: Spiro, Kamand, Hutton
+ *
+ * Created on: 2024/09/23
+ */
+
 #ifndef TIMEDELAY_H
 #define TIMEDELAY_H
 

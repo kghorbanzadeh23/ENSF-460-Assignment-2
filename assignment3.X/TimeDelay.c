@@ -1,6 +1,6 @@
 /* 
- * File:   TimeDelay2.c
- * Author: spiro
+ * File:   TimeDelay.c
+ * Author: Spiro, Kamand, Hutton
  *
  * Created on September 16, 2024, 3:58 PM
  */

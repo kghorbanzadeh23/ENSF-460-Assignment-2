@@ -1,5 +1,5 @@
 /*
- * File:   UART2.c
+ * File:   UART.c
  * Author: Spiro, Kamand, Hutton
  *
  * Created on 2024/09/23

@@ -1,5 +1,5 @@
 /*
- * File:   assign3main.c
+ * File:  main.c
  * Author: Spiro, Kamand, Hutton
  *
  * Created on: 2024/09/23
