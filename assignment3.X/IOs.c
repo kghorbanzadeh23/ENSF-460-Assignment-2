@@ -94,28 +94,24 @@ void IOcheck(){
             break;
             
         case BUTTON_PRESSED:
-
-
-                if(PB1 == 0){
-                    PB1_event = 1;
-                }
-                else{
-                    PB1_event = 0;
-                }
-                if(PB2 == 0){
-                    PB2_event = 1;
-                } 
-                else{
-                    PB2_event = 0;
-                }
-                if(PB3 == 0){
-                    PB3_event = 1;
-                }
-                else{
-                    PB3_event = 0;
-                }
-                
-
+            if(PB1 == 0){
+                PB1_event = 1;
+            }
+            else{
+                PB1_event = 0;
+            }
+            if(PB2 == 0){
+                PB2_event = 1;
+            } 
+            else{
+                PB2_event = 0;
+            }
+            if(PB3 == 0){
+                PB3_event = 1;
+            }
+            else{
+                PB3_event = 0;
+            } 
             state = FIND_BUTTONS;
 
             break;
@@ -172,6 +168,7 @@ void IOcheck(){
             break;
         case LED_ON:
             LEDOUT = 1;
+            Idle();
             break;
     }
 }
