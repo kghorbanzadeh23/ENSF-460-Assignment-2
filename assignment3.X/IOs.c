@@ -50,7 +50,7 @@ void IOinit(){
     IPC2bits.T3IP = 2; //7 is highest and 1 is lowest pri.
     IFS0bits.T3IF = 0;
     IEC0bits.T3IE = 1; //enable timer interrupt
-    PR3 = 15625/2; // set the count value for 0.5 s (or 500 ms)
+    PR3 = 15625/5; // set the count value for 0.5 s (or 500 ms)
     TMR3 = 0;
     T3CONbits.TON = 0;
 
