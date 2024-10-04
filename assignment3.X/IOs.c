@@ -97,29 +97,6 @@ void IOcheck(){
             break;
             
         case BUTTON_PRESSED:
-            if(PB1 == 0){
-                PB1_event = 1;
-            }
-            else{
-                PB1_event = 0;
-            }
-            if(PB2 == 0){
-                PB2_event = 1;
-            } 
-            else{
-                PB2_event = 0;
-            }
-            if(PB3 == 0){
-                PB3_event = 1;
-            }
-            else{
-                PB3_event = 0;
-            } 
-            state = FIND_BUTTONS;
-
-            break;
-            
-        case FIND_BUTTONS: 
             CNflag = 0;
             T3CONbits.TON = 1;  //Turn timer on to prevent debounce
             Idle();
@@ -165,6 +142,7 @@ void IOcheck(){
             }
 
             break;
+            
         case BLINKING:
             LEDOUT = !LEDOUT;
             delay_ms(Blinking_Interval);
@@ -181,7 +159,7 @@ void IOcheck(){
 void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
          //Don't forget to clear the CN interrupt flag!
     CNflag = 1;
-    state = FIND_BUTTONS;
+    state = BUTTON_PRESSED;
     T2CONbits.TON = 0;
     IFS1bits.CNIF = 0;
 }
