@@ -35,6 +35,7 @@ uint16_t Blinking_Interval = 0;
 uint16_t PB1_event;
 uint16_t PB2_event;
 uint16_t PB3_event;
+uint8_t CNflag;
 
 void IOinit(){
     
@@ -83,7 +84,7 @@ void IOinit(){
     //Default state
     state = NOTHING_PRESSED;
     Blinking_Interval = 0;
-
+    CNflag = 0;
 }
 
 void IOcheck(){
@@ -119,45 +120,45 @@ void IOcheck(){
             break;
             
         case FIND_BUTTONS: 
+            CNflag = 0;
             T3CONbits.TON = 1;  //Turn timer on to prevent debounce
-
             Idle();
             
-            if(state == BUTTON_PRESSED){
+            if(CNflag){
                 break;  //If debounce occurs or new button is pressed leave this case
             }
             
-            if (!(PB1_event || PB2_event || PB3_event)){
+            if (PB1 && PB2 && PB3){
                 state = NOTHING_PRESSED;
 
             }
-            else if (PB1_event && PB2_event && PB3_event){
+            else if (!PB1 && !PB2 && !PB3){
                 Disp2String("All buttons pressed\n\r");
                 state = LED_ON;
             }
-            else if (PB2_event && PB1_event) {
+            else if (!PB2 && !PB1) {
                 Disp2String("PB1 and PB2 pressed\n\r");
                 state = LED_ON;
             }
-            else if (PB3_event && PB2_event) {
+            else if (!PB3 && !PB2) {
                 Disp2String("PB2 and PB3 pressed\n\r");
                 state = LED_ON;
             }
-            else if (PB3_event && PB1_event) {
+            else if (!PB3 && !PB1) {
                 Disp2String("PB1 and PB3 pressed\n\r");
                 state = LED_ON;
             }
-            else if (PB1_event){
+            else if (!PB1){
                 Disp2String("PB1 event\n\r");
                 state = BLINKING;
                 Blinking_Interval = 500;
             }
-            else if(PB2_event){
+            else if(!PB2){
                 Disp2String("PB2 event\n\r");
                 state = BLINKING;
                 Blinking_Interval = 1000;
             }
-            else if(PB3_event){
+            else if(!PB3){
                 Disp2String("PB3 event\n\r");
                 state = BLINKING;
                 Blinking_Interval = 4000;
@@ -179,7 +180,8 @@ void IOcheck(){
 
 void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
          //Don't forget to clear the CN interrupt flag!
-    state = BUTTON_PRESSED;
+    CNflag = 1;
+    state = FIND_BUTTONS;
     T2CONbits.TON = 0;
     IFS1bits.CNIF = 0;
 }
