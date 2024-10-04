@@ -78,7 +78,7 @@ void IOinit(){
 void IOcheck(){
     switch(state){
         case NOTHING_PRESSED:
-            Disp2String("Nothing pressed\n\r");
+            sendMessage("Nothing pressed\n\r");
             LEDOUT = 0;
 
             Idle();
@@ -98,33 +98,33 @@ void IOcheck(){
 
             }
             else if (!PB1 && !PB2 && !PB3){
-                Disp2String("All buttons pressed\n\r");
+                sendMessage("All buttons pressed\n\r");
                 state = LED_ON;
             }
             else if (!PB2 && !PB1) {
-                Disp2String("PB1 and PB2 pressed\n\r");
+                sendMessage("PB1 and PB2 pressed\n\r");
                 state = LED_ON;
             }
             else if (!PB3 && !PB2) {
-                Disp2String("PB2 and PB3 pressed\n\r");
+                sendMessage("PB2 and PB3 pressed\n\r");
                 state = LED_ON;
             }
             else if (!PB3 && !PB1) {
-                Disp2String("PB1 and PB3 pressed\n\r");
+                sendMessage("PB1 and PB3 pressed\n\r");
                 state = LED_ON;
             }
             else if (!PB1){
-                Disp2String("PB1 event\n\r");
+                sendMessage("PB1 event\n\r");
                 state = BLINKING;
                 Blinking_Interval = 500;
             }
             else if(!PB2){
-                Disp2String("PB2 event\n\r");
+                sendMessage("PB2 event\n\r");
                 state = BLINKING;
                 Blinking_Interval = 1000;
             }
             else if(!PB3){
-                Disp2String("PB3 event\n\r");
+                sendMessage("PB3 event\n\r");
                 state = BLINKING;
                 Blinking_Interval = 4000;
             }
@@ -142,13 +142,22 @@ void IOcheck(){
     }
 }
     
-
+void sendMessage(char* message){
+    //Clear terminal
+    Disp2String("\033[2J");
+    //Makes cursor goto top left
+    Disp2String("\033[H");
+    //Send message
+    Disp2String(message);
+}
 
 void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
          //Don't forget to clear the CN interrupt flag!
     CNflag = 1;
     state = BUTTON_PRESSED;
     T2CONbits.TON = 0;
+    T3CONbits.TON = 0;
+
     IFS1bits.CNIF = 0;
 }
 

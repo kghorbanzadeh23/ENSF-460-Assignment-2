@@ -13,4 +13,5 @@
 // Function declarations
 void IOinit();
 void IOcheck();
+void sendMessage();
 #endif
