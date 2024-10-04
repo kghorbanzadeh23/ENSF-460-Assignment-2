@@ -56,11 +56,6 @@
 #include "TimeDelay.h"
 #include "IOs.h"
 
-#define PB1 PORTAbits.RA2 
-#define PB2 PORTBbits.RB4
-#define PB3 PORTAbits.RA4
-#define LEDOUT LATBbits.LATB8
-
 
 int main(void) {
     
