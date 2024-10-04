@@ -11,20 +11,15 @@
 #include "TimeDelay.h"
 #include "clkChange.h"
 
-
-
-
 #define PB1 PORTAbits.RA2 
 #define PB2 PORTBbits.RB4
 #define PB3 PORTAbits.RA4
 #define LEDOUT LATBbits.LATB8
-//
-//
+
 
 typedef enum{
     NOTHING_PRESSED,
     BUTTON_PRESSED,
-    FIND_BUTTONS,
     BLINKING,
     LED_ON
 } states;
@@ -32,9 +27,6 @@ typedef enum{
 states state = NOTHING_PRESSED;
 uint16_t Blinking_Interval = 0;
 
-uint16_t PB1_event;
-uint16_t PB2_event;
-uint16_t PB3_event;
 uint8_t CNflag;
 
 void IOinit(){
@@ -71,10 +63,6 @@ void IOinit(){
     CNPU2bits.CN30PUE = 1;
     CNEN2bits.CN30IE = 1;
     
-    /* Let's clear some flags */
-    PB1_event = 0;
-    PB2_event = 0;
-    PB3_event = 0;
 
     //Enable Interrupt
     IPC4bits.CNIP = 6;
