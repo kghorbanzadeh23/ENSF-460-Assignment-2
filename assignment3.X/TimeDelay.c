@@ -11,10 +11,9 @@
 
 
 void delay_ms(uint16_t time_ms){
-    newClk(500);
     
-    if(time_ms > 16778){
-        time_ms = 16778;
+    if(time_ms > 16778){ 
+        time_ms = 16778;    //If over max amount before overflow set time_ms to that max amount
     }
     
     //Timer2 config
@@ -36,7 +35,7 @@ void delay_ms(uint16_t time_ms){
     else{
         PR2 = (time_ms * 3.906);// Calculate count value for timer
     }
-    TMR2 = 1;
+    TMR2 = 1;   //Set the timer2 flag to 1
 
     T2CONbits.TON = 1;          // Enable timer 2
     Idle();    //Run until timer interrupt
