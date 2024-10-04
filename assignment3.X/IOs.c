@@ -17,23 +17,24 @@
 #define LEDOUT LATBbits.LATB8
 
 
+//Different states
 typedef enum{
-    NOTHING_PRESSED,
-    BUTTON_PRESSED,
-    BLINKING,
-    LED_ON
+    NOTHING_PRESSED,    //When no buttons are pressed
+    BUTTON_PRESSED,     //When a button is pushed or let go
+    BLINKING,           //If a button is pushed and cause blinking
+    LED_ON              //Keeps LED_ON if more than 2 buttons are on
 } states;
 
-states state = NOTHING_PRESSED;
-uint16_t Blinking_Interval = 0;
+states state = NOTHING_PRESSED; //Keeps track of state
+uint16_t Blinking_Interval = 0; //Tracks the Blinking_interval
 
-uint8_t CNflag;
+uint8_t CNflag; //Tracks if there was a CN interrupt
 
 void IOinit(){
     
     AD1PCFG = 0xFFFF; /* keep this line as it sets I/O pins that can also be analog to be digital */
     
-    newClk(500);
+    newClk(500);    //Switch clock to 500khz
     
     //T3CON config
     T2CONbits.T32 = 0; // operate timer 2 as 16 bit timer
@@ -77,67 +78,67 @@ void IOinit(){
 
 void IOcheck(){
     switch(state){
-        case NOTHING_PRESSED:
-            sendMessage("Nothing pressed\n\r");
-            LEDOUT = 0;
+        case NOTHING_PRESSED:        //State for when no buttons are pressed
+            sendMessage("Nothing pressed\n\r"); //Display message that no buttons are pressed
+            LEDOUT = 0;             //Turn led out
 
-            Idle();
+            Idle();                 //Idle until next interrupt
             break;
             
-        case BUTTON_PRESSED:
-            CNflag = 0;
+        case BUTTON_PRESSED:        //When any of the buttons states changed
+            CNflag = 0;             //Reset CNflag
             T3CONbits.TON = 1;  //Turn timer on to prevent debounce
-            Idle();
+            Idle();             //Stay here until the timer interrupt or button states change
             
             if(CNflag){
-                break;  //If debounce occurs or new button is pressed leave this case
+                break;  //If debounce occurs or new button is pressed leave this case and read the button states again
             }
             
-            if (PB1 && PB2 && PB3){
-                state = NOTHING_PRESSED;
+            if (PB1 && PB2 && PB3){     //If all buttons are not pressed
+                state = NOTHING_PRESSED;    //Changed state 
 
             }
-            else if (!PB1 && !PB2 && !PB3){
-                sendMessage("All buttons pressed\n\r");
-                state = LED_ON;
+            else if (!PB1 && !PB2 && !PB3){ //If all buttons are pressed 
+                sendMessage("All buttons pressed\n\r"); //Display message according to new state
+                state = LED_ON;                         //Switch state to LED_ON
             }
-            else if (!PB2 && !PB1) {
-                sendMessage("PB1 and PB2 pressed\n\r");
+            else if (!PB2 && !PB1) { //If Push button 1 and 2 are pressed
+                sendMessage("PB1 and PB2 pressed\n\r"); //Display message according to new state
                 state = LED_ON;
             }
             else if (!PB3 && !PB2) {
-                sendMessage("PB2 and PB3 pressed\n\r");
+                sendMessage("PB2 and PB3 pressed\n\r"); //Display message according to new state
                 state = LED_ON;
             }
             else if (!PB3 && !PB1) {
-                sendMessage("PB1 and PB3 pressed\n\r");
+                sendMessage("PB1 and PB3 pressed\n\r"); //Display message according to new state
                 state = LED_ON;
             }
             else if (!PB1){
-                sendMessage("PB1 event\n\r");
-                state = BLINKING;
-                Blinking_Interval = 500;
+                sendMessage("PB1 event\n\r"); //Display message according to new state
+                state = BLINKING;             //Switch state to blinking
+                Blinking_Interval = 500;      //Set the blinking interval to 500ms
             }
             else if(!PB2){
-                sendMessage("PB2 event\n\r");
+                sendMessage("PB2 event\n\r"); //Display message according to new state
                 state = BLINKING;
-                Blinking_Interval = 1000;
+                Blinking_Interval = 1000;   //Set the blinking interval to 1000ms/1s
             }
             else if(!PB3){
-                sendMessage("PB3 event\n\r");
+                sendMessage("PB3 event\n\r"); //Display message according to new state
                 state = BLINKING;
-                Blinking_Interval = 4000;
+                Blinking_Interval = 4000;   //Set the blinking interval to 4000ms
             }
 
             break;
             
-        case BLINKING:
-            LEDOUT = !LEDOUT;
-            delay_ms(Blinking_Interval);
+        case BLINKING:  //Code to handle the blinking
+            LEDOUT = !LEDOUT;   //Switch light to opposite state 
+            delay_ms(Blinking_Interval);    //Pause the code here until an interrupt 
             break;
-        case LED_ON:
-            LEDOUT = 1;
-            Idle();
+        case LED_ON:    //Code to handle the multiple button pushes
+            LEDOUT = 1; //Turn LED on
+            Idle();     //Wait here until button states change
             break;
     }
 }
@@ -152,13 +153,12 @@ void sendMessage(char* message){
 }
 
 void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
-         //Don't forget to clear the CN interrupt flag!
-    CNflag = 1;
-    state = BUTTON_PRESSED;
-    T2CONbits.TON = 0;
-    T3CONbits.TON = 0;
+    CNflag = 1;     //Flag to detect a CN interrupt
+    state = BUTTON_PRESSED; //Change state to BUTTON_PRESSED as the states of the button changed
+    T2CONbits.TON = 0;      //Disable timer 2
+    T3CONbits.TON = 0;      //Disable timer 3
 
-    IFS1bits.CNIF = 0;
+    IFS1bits.CNIF = 0;     //Clear the CN interrupt flag
 }
 
 // Timer 2 interrupt subroutine
@@ -174,6 +174,5 @@ void __attribute__((interrupt, no_auto_psv)) _T3Interrupt(void){
     IFS0bits.T3IF = 0;  //Clear flag
     T3CONbits.TON = 0;  //Disable Timer3
 
-    TMR3 = 0;
 }
 

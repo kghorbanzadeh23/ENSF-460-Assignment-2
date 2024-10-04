@@ -56,36 +56,22 @@
 #include "TimeDelay.h"
 #include "IOs.h"
 
-
-//uint16_t PB1_event;
-//uint16_t PB2_event;
-//uint16_t PB3_event;
-
 #define PB1 PORTAbits.RA2 
 #define PB2 PORTBbits.RB4
 #define PB3 PORTAbits.RA4
 #define LEDOUT LATBbits.LATB8
 
 
-
-
-
 int main(void) {
     
-    /** This is usually where you would add run-once code
-     * e.g., peripheral initialization. For the first labs
-     * you might be fine just having it here. For more complex
-     * projects, you might consider having one or more initialize() functions
-     */
     
     /* Let's set up our UART */    
     InitUART2();
-    IOinit();
-    LEDOUT = 0;
+    IOinit(); //initialize the inputs and outputs
     
     while(1) {
                 
-        IOcheck();
+        IOcheck();  //Handles code for the program
     }
     return 0;
 }
