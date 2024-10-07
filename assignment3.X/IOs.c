@@ -11,6 +11,7 @@
 #include "TimeDelay.h"
 #include "clkChange.h"
 
+//Define input and outputs for easier readability
 #define PB1 PORTAbits.RA2 
 #define PB2 PORTBbits.RB4
 #define PB3 PORTAbits.RA4
@@ -49,20 +50,20 @@ void IOinit(){
     T3CONbits.TON = 0;
 
     /* Let's set up some I/O */
-    TRISBbits.TRISB8 = 0;
-    LATBbits.LATB8 = 1;
+    TRISBbits.TRISB8 = 0;   //Set as output
     
+    //Set as input
     TRISAbits.TRISA4 = 1;
-    CNPU1bits.CN0PUE = 1;
-    CNEN1bits.CN0IE = 1;
+    CNPU1bits.CN0PUE = 1;   //Enable pull-up
+    CNEN1bits.CN0IE = 1;    //Enable CN interrupts
     
-    TRISBbits.TRISB4 = 1;
-    CNPU1bits.CN1PUE = 1;
-    CNEN1bits.CN1IE = 1;
+    TRISBbits.TRISB4 = 1;   //Set as input
+    CNPU1bits.CN1PUE = 1;   //Enable pull-up
+    CNEN1bits.CN1IE = 1;    //Enable CN interrupt
     
-    TRISAbits.TRISA2 = 1;
-    CNPU2bits.CN30PUE = 1;
-    CNEN2bits.CN30IE = 1;
+    TRISAbits.TRISA2 = 1;   //Set as input
+    CNPU2bits.CN30PUE = 1;  //Enable pull-up
+    CNEN2bits.CN30IE = 1;   //Enable CN interrupt
     
 
     //Enable Interrupt
@@ -82,7 +83,7 @@ void IOcheck(){
             sendMessage("Nothing pressed\n\r"); //Display message that no buttons are pressed
             LEDOUT = 0;             //Turn led out
 
-            Idle();                 //Idle until next interrupt
+            Idle();                 //Idle until next interrupt either the timer or a new button pressed
             break;
             
         case BUTTON_PRESSED:        //When any of the buttons states changed
@@ -94,38 +95,39 @@ void IOcheck(){
                 break;  //If debounce occurs or new button is pressed leave this case and read the button states again
             }
             
+            //Which push buttons are pressed and which combination is pressed
             if (PB1 && PB2 && PB3){     //If all buttons are not pressed
                 state = NOTHING_PRESSED;    //Changed state 
 
             }
             else if (!PB1 && !PB2 && !PB3){ //If all buttons are pressed 
-                sendMessage("All buttons pressed\n\r"); //Display message according to new state
+                sendMessage("All buttons pressed\n\r"); //Display message according to combination of buttons that are pressed
                 state = LED_ON;                         //Switch state to LED_ON
             }
             else if (!PB2 && !PB1) { //If Push button 1 and 2 are pressed
-                sendMessage("PB1 and PB2 pressed\n\r"); //Display message according to new state
+                sendMessage("PB1 and PB2 pressed\n\r"); //Display message according to combination of buttons that are pressed
                 state = LED_ON;
             }
-            else if (!PB3 && !PB2) {
-                sendMessage("PB2 and PB3 pressed\n\r"); //Display message according to new state
+            else if (!PB3 && !PB2) { //If push buttons 3 and 2 are pressed
+                sendMessage("PB2 and PB3 pressed\n\r"); //Display message according to combination of buttons that are pressed
                 state = LED_ON;
             }
-            else if (!PB3 && !PB1) {
-                sendMessage("PB1 and PB3 pressed\n\r"); //Display message according to new state
+            else if (!PB3 && !PB1) { //If push buttons 3 and 1 are pressed
+                sendMessage("PB1 and PB3 pressed\n\r"); //Display message according to combination of buttons that are pressed
                 state = LED_ON;
             }
-            else if (!PB1){
-                sendMessage("PB1 event\n\r"); //Display message according to new state
-                state = BLINKING;             //Switch state to blinking
+            else if (!PB1){ //If only push button 1 is pressed
+                sendMessage("PB1 event\n\r"); //Display message according to which push button is pressed
+                state = BLINKING;             //Switch state to blinking as only one button is pressed
                 Blinking_Interval = 500;      //Set the blinking interval to 500ms
             }
-            else if(!PB2){
-                sendMessage("PB2 event\n\r"); //Display message according to new state
+            else if(!PB2){ //If only push button 2 is pressed
+                sendMessage("PB2 event\n\r"); //Display message according to which push button is pressed
                 state = BLINKING;
-                Blinking_Interval = 1000;   //Set the blinking interval to 1000ms/1s
+                Blinking_Interval = 1000;   //Set the blinking interval to 1000ms
             }
-            else if(!PB3){
-                sendMessage("PB3 event\n\r"); //Display message according to new state
+            else if(!PB3){ //If only push button 3 is pressed
+                sendMessage("PB3 event\n\r"); //Display message according to which push button is pressed
                 state = BLINKING;
                 Blinking_Interval = 4000;   //Set the blinking interval to 4000ms
             }

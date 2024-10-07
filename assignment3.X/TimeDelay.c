@@ -28,8 +28,8 @@ void delay_ms(uint16_t time_ms){
     IEC0bits.T2IE = 1;      // enable timer interrupt
     
     
-    if(time_ms <= 200){
-        T2CONbits.TCKPS = 0;    // set pre-scaler for 1ms
+    if(time_ms <= 200){ //Have a different sections for higher precision in the timer.
+        T2CONbits.TCKPS = 0;    // set pre-scaler for 1ms to be 1:1
         PR2 = time_ms * 250;  // Calculate count for 1ms
     }   
     else{
