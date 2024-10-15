@@ -90,26 +90,31 @@ void IOinit(){
 void IOcheck(){
     switch(state){
         case NOTHING_PRESSED:        //State for when no buttons are pressed
-
+            LEDOUT = 0;
             Idle();                 //Idle until next interrupt either the timer or a new button pressed
             break;
             
         case BUTTON_PRESSED:        //When any of the buttons states changed
-            if(!PB3 && PB2 && PB3){
+            if(!PB3){
                 T3CONbits.TON = 0;
                 CNflag = 0;
+
                 delay_ms(3000);
                 T2CONbits.TON = 0;
                 
-                if(CNflag && seconds && minutes){
+                if(CNflag && (seconds || minutes)){
                     if(!timerActive){
                         startTimer();
-                        timerPaused = 1;
+                        timerActive = 1;
+                        sendMessage("CNT ");
+
                         break;
                     }
                     
                     if(timerPaused){
                        state = TIMER_IDLE;
+                       T3CONbits.TON = 1;
+
                        timerPaused = 0;
                     }
                     else if(!timerPaused){
@@ -122,16 +127,21 @@ void IOcheck(){
                     seconds = 0;
                     minutes = 0;
                     state = NOTHING_PRESSED;
+                    timerPaused = 1;
+                    timerActive = 0;
+                    TMR3 = 0;
+                    
                     sendMessage("CLR ");
                 }
                 else{
                     state = NOTHING_PRESSED;
+
                 }
                 break;
             }
             
             
-            if(!timerPaused){
+            if(timerActive){
                 break;
             }
             
@@ -141,6 +151,7 @@ void IOcheck(){
             if(CNflag){
                 break;  //If debounce occurs or new button is pressed leave this case and read the button states again
             }
+            
             
             //Which push buttons are pressed and which combination is pressed
             if (!PB2 && !PB1) { //If Push button 1 and 2 are pressed
@@ -166,11 +177,10 @@ void IOcheck(){
 
             break;
             
-        case TIMER_CHANGE:
-            T3CONbits.TON = 1;  
+        case TIMER_CHANGE:  
             changeTime(deltaSec, deltaMin);
             sendMessage("SET ");
-            delay_ms(100);    //Pause the code here until an interrupt 
+            delay_ms(200);    //Pause the code here until an interrupt 
             
             if(PB2Counter >= 10){
                 deltaSec = 5;
@@ -188,6 +198,9 @@ void IOcheck(){
             }
             else{
                 sendMessage("CNT ");
+                TMR3 = 0;
+                T3CONbits.TON = 1;
+                state = TIMER_IDLE;
             }
 
             break;
@@ -200,8 +213,8 @@ void IOcheck(){
             T3CONbits.TON = 0;
             LEDOUT = 1;
             sendMessage("FIN ");
-            Idle();
-            
+            timerPaused = 1;
+            state = NOTHING_PRESSED;
             break;
         case TIMER_IDLE:
             Idle();
@@ -210,9 +223,9 @@ void IOcheck(){
 }
     
 
-startTimer(){
-    TMR3 = 0;
-    T3CONbits.TON = 1;      //Start timer 3
+void startTimer(){
+    startTimer3();
+    state = TIMER_IDLE;
 }
 void sendMessage(char* message){
     char strMIN[5];
@@ -243,7 +256,7 @@ void sendMessage(char* message){
 void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
     CNflag = 1;     //Flag to detect a CN interrupt
     state = BUTTON_PRESSED; //Change state to BUTTON_PRESSED as the states of the button changed
-    T3CONbits.TON = 0;      //Disable timer 3
+    //T3CONbits.TON = 0;      //Disable timer 3
     IFS1bits.CNIF = 0;     //Clear the CN interrupt flag
 }
 
@@ -253,38 +266,49 @@ void __attribute__((interrupt, no_auto_psv)) _T3Interrupt(void){
     IFS0bits.T3IF = 0;  //Clear flag
     T3CONbits.TON = 0;  //Disable Timer3
     timer3Flag = 1;
-    TMR3 = 0;
     state = TIMER_COUNTDOWN;
 }
 
 
 void changeTime(int8_t changeSec, int8_t changeMinute){
+
+  
     seconds += changeSec;
-    minutes += changeMinute;
+    if(seconds == 255 && minutes && changeSec){
+        seconds = 59;
+        minutes--;
+    }
+    else{
+        minutes += changeMinute;
+
+    }
     
-    if(seconds == 60){
-        seconds = 0;
+    if(seconds >= 60){
+        seconds = seconds - 60;        
         minutes++;
     }
-    
-    if(minutes == 60){
+
+    if(minutes >= 60){
         minutes = 0;
-    }
+    } 
+    
+    
+
     
 }
 
-startTimer3(){
+void startTimer3(){
     //T3CON config
     T2CONbits.T32 = 0; // operate timer 2 as 16 bit timer
-    T3CONbits.TCKPS = 2; // set prescaler to 1:8
+    T3CONbits.TCKPS = 1; // set prescaler to 1:8
     T3CONbits.TCS = 0; // use internal clock
     T3CONbits.TSIDL = 0; //operate in idle mode
     IPC2bits.T3IP = 2; //7 is highest and 1 is lowest pri.
     IFS0bits.T3IF = 0;
     IEC0bits.T3IE = 1; //enable timer interrupt
-    PR3 = 3.906*1000; // set the count value for 0.5 s (or 500 ms)
+    PR3 = 15625*2; // set the count value for 0.5 s (or 500 ms)
     TMR3 = 0;
-    T3CONbits.TON = 0;
+    T3CONbits.TON = 1;
     timerActive = 1;
 }
 

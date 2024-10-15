@@ -14,4 +14,6 @@
 void IOinit();
 void IOcheck();
 void sendMessage();
+void startTimer();
+void startTimer3();
 #endif
