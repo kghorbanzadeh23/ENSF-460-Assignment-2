@@ -23,8 +23,9 @@ typedef enum{
     NOTHING_PRESSED,    //When no buttons are pressed
     BUTTON_PRESSED,     //When a button is pushed or let go          
     TIMER_CHANGE,
-    TIMER_ACTIVE,              
+    TIMER_COUNTDOWN,              
     TIMER_PAUSED,
+    TIMER_IDLE,
     TIMER_COMPLETED
 } states;
 
@@ -35,6 +36,10 @@ uint8_t minutes = 0;
 int8_t deltaSec = 0;
 int8_t deltaMin = 0;
 uint8_t CNflag; //Tracks if there was a CN interrupt
+uint8_t timerPaused = 1;
+uint8_t timer3Flag = 0;
+uint8_t timerActive = 0;
+uint8_t PB2Counter = 0;
 
 void IOinit(){
     
@@ -42,17 +47,17 @@ void IOinit(){
     
     newClk(500);    //Switch clock to 500khz
     
-    //T3CON config
-    T2CONbits.T32 = 0; // operate timer 2 as 16 bit timer
-    T3CONbits.TCKPS = 1; // set prescaler to 1:8
-    T3CONbits.TCS = 0; // use internal clock
-    T3CONbits.TSIDL = 0; //operate in idle mode
-    IPC2bits.T3IP = 2; //7 is highest and 1 is lowest pri.
-    IFS0bits.T3IF = 0;
-    IEC0bits.T3IE = 1; //enable timer interrupt
-    PR3 = 15625/5; // set the count value for 0.5 s (or 500 ms)
-    TMR3 = 0;
-    T3CONbits.TON = 0;
+//    //T3CON config
+//    T2CONbits.T32 = 0; // operate timer 2 as 16 bit timer
+//    T3CONbits.TCKPS = 1; // set prescaler to 1:8
+//    T3CONbits.TCS = 0; // use internal clock
+//    T3CONbits.TSIDL = 0; //operate in idle mode
+//    IPC2bits.T3IP = 2; //7 is highest and 1 is lowest pri.
+//    IFS0bits.T3IF = 0;
+//    IEC0bits.T3IE = 1; //enable timer interrupt
+//    PR3 = 15625/5; // set the count value for 0.5 s (or 500 ms)
+//    TMR3 = 0;
+//    T3CONbits.TON = 0;
 
     /* Let's set up some I/O */
     TRISBbits.TRISB8 = 0;   //Set as output
@@ -85,18 +90,53 @@ void IOinit(){
 void IOcheck(){
     switch(state){
         case NOTHING_PRESSED:        //State for when no buttons are pressed
-            sendMessage("Nothing pressed\n\r"); //Display message that no buttons are pressed
-            LEDOUT = 0;             //Turn led out
 
             Idle();                 //Idle until next interrupt either the timer or a new button pressed
             break;
             
         case BUTTON_PRESSED:        //When any of the buttons states changed
+            if(!PB3 && PB2 && PB3){
+                T3CONbits.TON = 0;
+                CNflag = 0;
+                delay_ms(3000);
+                T2CONbits.TON = 0;
+                
+                if(CNflag && seconds && minutes){
+                    if(!timerActive){
+                        startTimer();
+                        timerPaused = 1;
+                        break;
+                    }
+                    
+                    if(timerPaused){
+                       state = TIMER_IDLE;
+                       timerPaused = 0;
+                    }
+                    else if(!timerPaused){
+                        timerPaused = 1;
+                        state = TIMER_PAUSED;
+                    }
+
+                }
+                else if(!CNflag){
+                    seconds = 0;
+                    minutes = 0;
+                    state = NOTHING_PRESSED;
+                    sendMessage("CLR ");
+                }
+                else{
+                    state = NOTHING_PRESSED;
+                }
+                break;
+            }
+            
+            
+            if(!timerPaused){
+                break;
+            }
             
             CNflag = 0;             //Reset CNflag
-            T3CONbits.TON = 1;  //Turn timer on to prevent debounce
-            TMR3 = 0;
-            Idle();             //Stay here until the timer interrupt or button states change
+            delay_ms(50);
             
             if(CNflag){
                 break;  //If debounce occurs or new button is pressed leave this case and read the button states again
@@ -114,50 +154,90 @@ void IOcheck(){
                 state = TIMER_CHANGE;             //Switch state to blinking as only one button is pressed
             }
             else if(!PB2){ //If only push button 2 is pressed
-                deltaMin = 0;
                 deltaSec = 1;
+                deltaMin = 0;
                 state = TIMER_CHANGE;             //Switch state to blinking as only one button is pressed
             }
-            else if(!PB3){ //If only push button 3 is pressed
-                state = TIMER_ACTIVE;
+            else{
+                PB2Counter = 0;
+                state = NOTHING_PRESSED;
             }
+
 
             break;
             
-        case TIMER_CHANGE:  //Code to handle the blinking
-            char* message = changeTime(deltaSec, deltaMin);
-            
+        case TIMER_CHANGE:
+            T3CONbits.TON = 1;  
+            changeTime(deltaSec, deltaMin);
+            sendMessage("SET ");
             delay_ms(100);    //Pause the code here until an interrupt 
-            break;
-        case TIMER_ACTIVE:    //Code to handle the multiple button pushes
-            LEDOUT = !LEDOUT;   //Switch light to opposite state 
-            delay_ms(1000);
-            changeTime(-1,0);
             
-            if(seconds == 0 && minutes == 0){
-                
+            if(PB2Counter >= 10){
+                deltaSec = 5;
             }
+            else{
+                PB2Counter++;
+            }
+            break;
+        case TIMER_COUNTDOWN:    //Code to handle the multiple button pushes
+            
+            LEDOUT = !LEDOUT;   //Switch light to opposite state 
+            changeTime(-1,0);
+            if(seconds == 0 && minutes == 0){
+                state = TIMER_COMPLETED;
+            }
+            else{
+                sendMessage("CNT ");
+            }
+
             break;
         case TIMER_PAUSED:
             
             Idle();
             break;
         case TIMER_COMPLETED:
+            timerActive = 0;
+            T3CONbits.TON = 0;
             LEDOUT = 1;
-            
+            sendMessage("FIN ");
             Idle();
             
+            break;
+        case TIMER_IDLE:
+            Idle();
             break;
     }
 }
     
+
+startTimer(){
+    TMR3 = 0;
+    T3CONbits.TON = 1;      //Start timer 3
+}
 void sendMessage(char* message){
+    char strMIN[5];
+    char strSEC[5];
+    
+    sprintf(strMIN, "%02dm", minutes);
+    sprintf(strSEC, "%02ds", seconds);
+    
+    char fullMessage[50];
+    
+    strcpy(fullMessage, message);
+    strcat(fullMessage, strMIN);
+    strcat(fullMessage, " : ");
+    strcat(fullMessage, strSEC);
+    
+    if(state == TIMER_COMPLETED){
+        strcat(fullMessage, " -- ALARM");
+    }
+            
     //Clear terminal
     Disp2String("\033[2J");
     //Makes cursor goto top left
     Disp2String("\033[H");
     //Send message
-    Disp2String(message);
+    Disp2String(fullMessage);
 }
 
 void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
@@ -167,21 +247,15 @@ void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
     IFS1bits.CNIF = 0;     //Clear the CN interrupt flag
 }
 
-// Timer 2 interrupt subroutine
-void __attribute__((interrupt, no_auto_psv)) _T2Interrupt(void){
-    IFS0bits.T2IF = 0;  //Clear Flag
-    T2CONbits.TON = 0;  //Disable Timer2
-
-}
-
 // Timer 3 interrupt subroutine
 void __attribute__((interrupt, no_auto_psv)) _T3Interrupt(void){
     //Don't forget to clear the timer 3 interrupt flag!
     IFS0bits.T3IF = 0;  //Clear flag
     T3CONbits.TON = 0;  //Disable Timer3
-
+    timer3Flag = 1;
+    TMR3 = 0;
+    state = TIMER_COUNTDOWN;
 }
-
 
 
 void changeTime(int8_t changeSec, int8_t changeMinute){
@@ -198,3 +272,19 @@ void changeTime(int8_t changeSec, int8_t changeMinute){
     }
     
 }
+
+startTimer3(){
+    //T3CON config
+    T2CONbits.T32 = 0; // operate timer 2 as 16 bit timer
+    T3CONbits.TCKPS = 2; // set prescaler to 1:8
+    T3CONbits.TCS = 0; // use internal clock
+    T3CONbits.TSIDL = 0; //operate in idle mode
+    IPC2bits.T3IP = 2; //7 is highest and 1 is lowest pri.
+    IFS0bits.T3IF = 0;
+    IEC0bits.T3IE = 1; //enable timer interrupt
+    PR3 = 3.906*1000; // set the count value for 0.5 s (or 500 ms)
+    TMR3 = 0;
+    T3CONbits.TON = 0;
+    timerActive = 1;
+}
+

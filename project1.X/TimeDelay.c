@@ -35,9 +35,14 @@ void delay_ms(uint16_t time_ms){
     else{
         PR2 = (time_ms * 3.906);// Calculate count value for timer
     }
-    TMR2 = 1;   //Set the timer2 flag to 1
+    TMR2 = 0;   //Set the timer2 flag to 1
 
     T2CONbits.TON = 1;          // Enable timer 2
     Idle();    //Run until timer interrupt
 }
 
+// Timer 2 interrupt subroutine
+void __attribute__((interrupt, no_auto_psv)) _T2Interrupt(void){
+    IFS0bits.T2IF = 0;  //Clear Flag
+    T2CONbits.TON = 0;  //Disable Timer2
+}
