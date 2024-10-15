@@ -95,7 +95,7 @@ void IOcheck(){
             break;
             
         case BUTTON_PRESSED:        //When any of the buttons states changed
-            if(!PB3){
+            if(!PB3 && PB2 && PB1){
                 T3CONbits.TON = 0;
                 CNflag = 0;
 
@@ -162,7 +162,8 @@ void IOcheck(){
             else if (!PB1){ //If only push button 1 is pressed
                 deltaSec = 0;
                 deltaMin = 1;
-                state = TIMER_CHANGE;             //Switch state to blinking as only one button is pressed
+                state = TIMER_CHANGE; 
+                PB2Counter = 0;
             }
             else if(!PB2){ //If only push button 2 is pressed
                 deltaSec = 1;
@@ -306,7 +307,7 @@ void startTimer3(){
     IPC2bits.T3IP = 2; //7 is highest and 1 is lowest pri.
     IFS0bits.T3IF = 0;
     IEC0bits.T3IE = 1; //enable timer interrupt
-    PR3 = 15625*2; // set the count value for 0.5 s (or 500 ms)
+    PR3 = 31250; // set the count value for 0.5 s (or 500 ms)
     TMR3 = 0;
     T3CONbits.TON = 1;
     timerActive = 1;
