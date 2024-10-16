@@ -191,7 +191,8 @@ void IOcheck(){
             }
             break;
         case TIMER_COUNTDOWN:    //Code to handle the multiple button pushes
-            
+            TMR3 = 0;
+            T3CONbits.TON = 1;
             LEDOUT = !LEDOUT;   //Switch light to opposite state 
             changeTime(-1,0);
             if(seconds == 0 && minutes == 0){
@@ -199,14 +200,11 @@ void IOcheck(){
             }
             else{
                 sendMessage("CNT ");
-                TMR3 = 0;
-                T3CONbits.TON = 1;
                 state = TIMER_IDLE;
             }
 
             break;
         case TIMER_PAUSED:
-            
             Idle();
             break;
         case TIMER_COMPLETED:
@@ -215,7 +213,7 @@ void IOcheck(){
             LEDOUT = 1;
             sendMessage("FIN ");
             timerPaused = 1;
-            state = NOTHING_PRESSED;
+            Idle();
             break;
         case TIMER_IDLE:
             Idle();
@@ -229,18 +227,14 @@ void startTimer(){
     state = TIMER_IDLE;
 }
 void sendMessage(char* message){
-    char strMIN[5];
-    char strSEC[5];
+    char strTime[20];
     
-    sprintf(strMIN, "%02dm", minutes);
-    sprintf(strSEC, "%02ds", seconds);
+    sprintf(strTime, "%02dm : %02ds", minutes, seconds);
     
     char fullMessage[50];
     
     strcpy(fullMessage, message);
-    strcat(fullMessage, strMIN);
-    strcat(fullMessage, " : ");
-    strcat(fullMessage, strSEC);
+    strcat(fullMessage, strTime);
     
     if(state == TIMER_COMPLETED){
         strcat(fullMessage, " -- ALARM");
@@ -307,7 +301,7 @@ void startTimer3(){
     IPC2bits.T3IP = 2; //7 is highest and 1 is lowest pri.
     IFS0bits.T3IF = 0;
     IEC0bits.T3IE = 1; //enable timer interrupt
-    PR3 = 31250; // set the count value for 0.5 s (or 500 ms)
+    PR3 = (15625*2); // set the count value for 1 s (or 1000 ms)
     TMR3 = 0;
     T3CONbits.TON = 1;
     timerActive = 1;
