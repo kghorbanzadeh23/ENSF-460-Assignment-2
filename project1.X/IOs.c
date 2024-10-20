@@ -30,7 +30,6 @@ typedef enum{
 } states;
 
 states state = NOTHING_PRESSED; //Keeps track of state
-uint16_t Blinking_Interval = 0; //Tracks the Blinking_interval
 uint8_t seconds = 0;    //Keep track of seconds
 uint8_t minutes = 0;    //Keep track of minutes
 int8_t deltaSec = 0;    //To keep track of what to change the seconds by according to the buttons
@@ -70,7 +69,6 @@ void IOinit(){
     
     //Default state
     state = NOTHING_PRESSED;
-    Blinking_Interval = 0;
     CNflag = 0;
 }
 
@@ -173,7 +171,7 @@ void IOcheck(){
             if(PB2Counter >= 10){   //Checks if PB2 is held for 2 seconds
                 deltaSec = 5;   //Start adding 5 seconds per loop
             }
-            else{
+            else if(PB2){
                 PB2Counter++;   //Add to counter so after 2 seconds starts going up by 2
             }
             break;
