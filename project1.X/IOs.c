@@ -120,8 +120,6 @@ void IOcheck(){
                     sendMessage("CLR ");        //Send clear message
                     CNEN1bits.CN1IE = 1;    //Re-Enable CN interrupt for PB2
                     CNEN2bits.CN30IE = 1;   //Re-Enable CN interrupt for PB1
-
-
                 }
                 else{
                     state = NOTHING_PRESSED;    //If seconds and minutes are not set go back to nothing pressed
