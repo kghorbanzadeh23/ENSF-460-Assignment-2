@@ -68,7 +68,8 @@ void IOinit(){
     IEC1bits.CNIE = 1;  
     
     //Default state
-    state = NOTHING_PRESSED;
+    state = NOTHING_PRESSED;            
+    sendMessage("SET ");    //Send startup message
     CNflag = 0;
 }
 
@@ -117,6 +118,10 @@ void IOcheck(){
                     TMR3 = 0;                   //Reset TMR3 counter
                     
                     sendMessage("CLR ");        //Send clear message
+                    CNEN1bits.CN1IE = 1;    //Re-Enable CN interrupt for PB2
+                    CNEN2bits.CN30IE = 1;   //Re-Enable CN interrupt for PB1
+
+
                 }
                 else{
                     state = NOTHING_PRESSED;    //If seconds and minutes are not set go back to nothing pressed
@@ -168,10 +173,10 @@ void IOcheck(){
             sendMessage("SET ");    //Send updated time
             delay_ms(200);    //Pause the code here so the program is more controllable by the user
             
-            if(PB2Counter >= 10){   //Checks if PB2 is held for 2 seconds
+            if(PB2Counter >= 10 ){   //Checks if PB2 is held for 2 seconds
                 deltaSec = 5;   //Start adding 5 seconds per loop
             }
-            else if(PB2){
+            else if (!PB2){
                 PB2Counter++;   //Add to counter so after 2 seconds starts going up by 2
             }
             break;
@@ -198,7 +203,7 @@ void IOcheck(){
             LEDOUT = 1;         //Set LED to on
             sendMessage("FIN ");    //Send finish message
             timerPaused = 0;        //reset paused flag
-            CNEN1bits.CN0IE = 1;    //Enable CN interrupt for PB1
+            CNEN2bits.CN30IE = 1;     //Enable CN interrupt for PB1
             CNEN1bits.CN1IE = 1;    //Enable CN interrupt for PB2
             Idle();                 //Wait for user input
             break;
@@ -225,7 +230,7 @@ void startTimer(){  //Starts the timer
     
     state = TIMER_IDLE;     //Send it into idle waiting for interrupt
     //Disable CN interrupts to prevent unwanted inputs
-    CNEN1bits.CN0IE = 0;    //Disable CN interrupt for PB1
+    CNEN2bits.CN30IE = 0;    //Disable CN interrupt for PB1
     CNEN1bits.CN1IE = 0;    //Disable CN interrupt for PB2
     
 }
