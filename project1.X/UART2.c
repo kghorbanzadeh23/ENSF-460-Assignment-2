@@ -1,8 +1,8 @@
 /*
- * File:   UART.c
+ * File:   UART2.c
  * Author: Spiro, Kamand, Hutton
  *
- * Created on 2024/09/23
+ * Created on 2024/10/07
  */
 
 
@@ -10,7 +10,7 @@
 #include "math.h"
 #include "string.h"
 
-#include "UART.h"
+#include "UART2.h"
 
 
 

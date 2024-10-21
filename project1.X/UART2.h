@@ -1,8 +1,8 @@
 /* 
- * File:   UART.h
+ * File:   UART2.h
  * Author: Spiro, Kamand, Hutton
  *
- * Created on 2024/09/23
+ * Created on 2024/10/07
  */
 
 #ifndef UART2_H

@@ -52,7 +52,7 @@
 #include <xc.h>
 #include <p24F16KA101.h>
 #include "clkChange.h"
-#include "UART.h"
+#include "UART2.h"
 #include "TimeDelay.h"
 #include "IOs.h"
 
