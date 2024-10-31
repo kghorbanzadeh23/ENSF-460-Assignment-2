@@ -17,6 +17,7 @@
 
 
 #define PB1 PORTAbits.RA2 
+#define LEDOUT LATBbits.LATB8
 
 typedef enum{
     MODEZERO,    //When no buttons are pressed
@@ -34,6 +35,9 @@ void IOinit(){
     IPC4bits.CNIP = 6;
     IFS1bits.CNIF = 0;  //Clear Flag
     IEC1bits.CNIE = 1;  
+    
+    TRISBbits.TRISB8 = 0;   //Set as output
+
 }
 
 void StateInit(){
@@ -61,6 +65,7 @@ void IOcheck(){
     switch(state){
         case MODEZERO:;
             char line[45] = "Mode 0: ";
+            LEDOUT = 0;
             ADCvalue = do_ADC();
             uint8_t counter = ADCvalue * 0.031 + 1;
             for(int i = 0; i < counter; i++){
@@ -74,9 +79,11 @@ void IOcheck(){
             }
             break;
         case MODEONE:
-            sendMessage("Mode 1");
+            LEDOUT = 1;
             char stringADC[10];
-            sprintf(stringADC, "%d\n", ADCvalue);
+            ADCvalue = do_ADC();
+
+            sprintf(stringADC, "%d \n", ADCvalue);
             Disp2String(stringADC);
             break;
     }
