@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-PYTHON DEMO -- PART 2
-Created on Wed Nov  2 11:54:30 2022
+ADC Reader - Assignment 4
+Created on Thursday Oct 31, 2024
 
 CAPTURING 16 BIT INT AND FLOAT NUMBERS OVER A TIME INTERVAL
 Time stamps received numbers separated by \n
@@ -9,7 +9,7 @@ Saves in Dataframe
 Saves in csv
 Plots received data versus time
 
-@author: Rushi V
+@author: Spiro Douvis, Kamand Ghorbanzadeh, Hutton Ledingham
 """
 
 import numpy as np
@@ -87,5 +87,5 @@ dF.to_csv('RxDataFloat.csv', index = True)
 ### PLOT Rx VOLTAGE VS Rx TIME
 fig = px.line(dF, x='Rx Time (sec)', y='Rx Voltage', title = 'Voltage vs Time')
 fig.show()
-
+# fig.write_image("image1.png")
 
