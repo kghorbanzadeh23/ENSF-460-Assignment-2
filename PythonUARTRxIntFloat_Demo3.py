@@ -37,7 +37,7 @@ rxTimesList = []   #list to store time stamps of received uint16_t numbers
 startTime = time.time()   
 
 ## CAPTURE UART DATA
-while(time.time() - startTime < 3):  #record data for 1 sec
+while(time.time() - startTime < 10):  #record data for 1 sec
     line =ser.readline() # reads uint16_t nums as single bytes till \n n stores in string
     if ((line != b' \n') and (line != b'\n')) : #removes any '\n' without num captures
         rxNumsStr = rxNumsStr + line.decode('Ascii')  # Converts string of received uint16_t num to ASCII and combines Rx nums into 1 string
@@ -71,21 +71,21 @@ print(len(rxNumsList))
 ### CONVERT Rx DATA INTO DATA FRAME
 dF = pd.DataFrame()
 dF['Rx Time (sec)'] = rxTimesList
-dF['Rx Data'] = rxNumsList
+dF['Rx Voltage'] = rxNumsList
 
 
 ### DATA STATISTICS
 print(dF.describe())
 
 
-### COPY RX DATA AND RX TIME IN CSV AND XLS FILES
+### COPY RX VOLTAGE AND RX TIME IN CSV AND XLS FILES
 dF.to_csv('RxDataFloat.csv', index = True)
-dF.to_excel('RxDataFloat.xlsx', sheet_name='New Sheet')
+# dF.to_excel('RxDataFloat.xlsx', sheet_name='New Sheet')
 
 
 
-### PLOT Rx DATA VS Rx TIME
-fig = px.line(dF, x='Rx Time (sec)', y='Rx Data', title = 'RS232 Data vs Time')
+### PLOT Rx VOLTAGE VS Rx TIME
+fig = px.line(dF, x='Rx Time (sec)', y='Rx Voltage', title = 'Voltage vs Time')
 fig.show()
 
 
