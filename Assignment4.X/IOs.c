@@ -1,6 +1,6 @@
 /*
  * File:   IOs.c
- * Author: hutto
+ * Author: Spiro, Kamand, Hutton
  *
  * Created on October 31, 2024, 10:25 AM
  */
@@ -58,8 +58,6 @@ void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
 }
 
 void IOcheck(){
-                
-
     switch(state){
         case MODEZERO:;
             char line[45] = "Mode 0: ";
@@ -77,7 +75,9 @@ void IOcheck(){
             break;
         case MODEONE:
             sendMessage("Mode 1");
-            Idle();
+            char stringADC[10];
+            sprintf(stringADC, "%d\n", ADCvalue);
+            Disp2String(stringADC);
             break;
     }
 }
