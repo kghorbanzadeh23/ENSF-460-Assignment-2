@@ -55,8 +55,8 @@
 #include "TimeDelay.h"
 #include "ADC.h"
 #include "clkChange.h"
+#include "IOs.h"
 
-uint16_t ADCvalue;
 
 int main(void) {
     
@@ -65,11 +65,12 @@ int main(void) {
     InitUART2();
     ADC_init();
     newClk(500);
-    
+    StateInit();
+    IOinit();
     while(1) {
-        delay_ms(500);
-        ADCvalue = do_ADC();
-        Disp2Dec(ADCvalue);
+        IOcheck();
+//        ADCvalue = do_ADC();
+//        Disp2Dec(ADCvalue);
     }
     
     return 0;
