@@ -25,7 +25,7 @@ typedef enum{
 } states;
 states state; //Keeps track of state
 uint16_t ADCvalue;
-uint16_t previousADCvalue = 0;
+uint16_t previousADCvalue = 1;
 void IOinit(){
     TRISAbits.TRISA2 = 1;   //Set as input
     CNPU2bits.CN30PUE = 1;  //Enable pull-up
@@ -57,6 +57,7 @@ void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
     }
     else if (state == MODEONE && !PB1){
         state = MODEZERO;
+        previousADCvalue = 1;
     }
     IFS1bits.CNIF = 0;     //Clear the CN interrupt flag
 }
@@ -75,8 +76,9 @@ void IOcheck(){
                 previousADCvalue = ADCvalue;
                 sendMessage(line);
                 Disp2Hex(ADCvalue);
-                delay_ms(250);
             }
+            delay_ms(1000);
+
             break;
         case MODEONE:
             LEDOUT = 1;
