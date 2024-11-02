@@ -31,22 +31,22 @@ uint16_t do_ADC(void)
 uint16_t ADC_init(void)
 {
     /* ------------- ADC INITIALIZATION ------------------*/
-    TRISAbits.TRISA3 = 1;
-    AD1PCFG = 0xFFFF;
-    AD1CON1bits.SSRC = 7; // Configure ADC by setting bits in AD1CON1 register
-    AD1CON1bits.FORM = 0;
-    AD1CON1bits.ASAM = 0; 
+    TRISAbits.TRISA3 = 1;   //Set pin 9 to input
+    AD1PCFG = 0xFFFF; // I/O pins that can also be analog to be digital 
+    AD1CON1bits.SSRC = 7; // Internal Counter ends sampling and starts conversion
+    AD1CON1bits.FORM = 0;   //Integer Form for ouput
+    AD1CON1bits.ASAM = 0; //Sampling starts when SAMP bit is set
     AD1CON1bits.ADON = 1; //Turn off ADC, ADC value stored in ADC1BUF0;
-    AD1CON1bits.DONE = 1;
+    AD1CON1bits.DONE = 1;   
     AD1CON2bits.VCFG = 0b000; // Selects AVDD, AVSS (supply voltage to PIC) as Vref
-    AD1CON2bits.CSCNA = 0; // Configure ADC by setting bits in AD1CON2
-    AD1CON2bits.SMPI = 0;
-    AD1CON2bits.BUFM = 0;
-    AD1CON2bits.ALTS = 0;
+    AD1CON2bits.CSCNA = 0; // Do not scan inputs
+    AD1CON2bits.SMPI = 0;   //Interrupts at completion of conversion to each sample
+    AD1CON2bits.BUFM = 0;   //Buffer configured as one 16 word buffer
+    AD1CON2bits.ALTS = 0;   //Always uses MUX A input multiplexer settings
     AD1CON3bits.ADRC = 0; // Use system clock
-    AD1CON3bits.SAMC = 0x7; //Configure the ADC?s sample time by setting bits in AD1CON3
+    AD1CON3bits.SAMC = 0x7; //Set to Slowest sampling rate time = 21*2/fclk
     AD1CHSbits.CH0SA = 5; // Select and configure ADC input
     AD1CHSbits.CH0NA = 0; // Select and configure ADC input
-    AD1PCFGbits.PCFG5 = 0;
-    AD1CSSLbits.CSSL5 = 0;
+    AD1PCFGbits.PCFG5 = 0;  //Pin configured in Analog mode, I/O port read disabled
+    AD1CSSLbits.CSSL5 = 0;  //Analog channel omitted from input scan
 }
