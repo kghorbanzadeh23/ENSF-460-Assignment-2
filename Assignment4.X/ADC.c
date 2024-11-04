@@ -9,11 +9,6 @@
 #include <stdlib.h>
 #include "ADC.h"
 
-
-/*
- * 
- */
-
 uint16_t do_ADC(void)
 {
     uint16_t ADCvalue ; // 16 bit register used to hold ADC converted digital output ADC1BUF0

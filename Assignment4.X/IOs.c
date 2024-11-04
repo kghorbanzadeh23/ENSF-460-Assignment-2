@@ -15,7 +15,6 @@
 #include "UART.h"
 #include "ADC.h"
 
-
 #define PB1 PORTAbits.RA2 
 #define LEDOUT LATBbits.LATB8
 

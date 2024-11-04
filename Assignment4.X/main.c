@@ -69,8 +69,6 @@ int main(void) {
     IOinit();
     while(1) {
         IOcheck();
-//        ADCvalue = do_ADC();
-//        Disp2Dec(ADCvalue);
     }
     
     return 0;
