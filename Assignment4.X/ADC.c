@@ -19,16 +19,14 @@ uint16_t do_ADC(void)
     uint16_t ADCvalue ; // 16 bit register used to hold ADC converted digital output ADC1BUF0
     /* ------------- ADC SAMPLING AND CONVERSION ------------------*/
     AD1CON1bits.SAMP = 1; //Start Sampling, Conversion starts automatically after SSRC and SAMC settings
-//    AD1CON1bits.ADON = 1; // turn on ADC module
     while(AD1CON1bits.DONE==0)
         {}
     ADCvalue = ADC1BUF0; // ADC output is stored in ADC1BUF0 as this point
     AD1CON1bits.SAMP = 0; //Stop sampling
-//    AD1CON1bits.ADON = 0; //Turn off ADC, ADC value stored in ADC1BUF0;
     return (ADCvalue); //returns 10 bit ADC output stored in ADC1BIF0 to calling function
 }
 
-uint16_t ADC_init(void)
+void ADC_init()
 {
     /* ------------- ADC INITIALIZATION ------------------*/
     TRISAbits.TRISA3 = 1;   //Set pin 9 to input

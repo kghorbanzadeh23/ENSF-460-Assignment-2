@@ -26,6 +26,7 @@ typedef enum{
 states state; //Keeps track of state
 uint16_t ADCvalue;
 uint16_t previousADCvalue = 1;
+
 void IOinit(){
     TRISAbits.TRISA2 = 1;   //Set as input
     CNPU2bits.CN30PUE = 1;  //Enable pull-up

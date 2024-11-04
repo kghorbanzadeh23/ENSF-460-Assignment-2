@@ -12,7 +12,7 @@
 
 // Function declarations
 uint16_t do_ADC(void);
-uint16_t ADC_init(void);
+void ADC_init();
 
 
 #endif // ADC_H
