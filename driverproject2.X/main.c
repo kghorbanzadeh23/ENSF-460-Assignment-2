@@ -56,7 +56,6 @@
 #include "ADC.h"
 #include "clkChange.h"
 
-uint16_t ADCvalue;
 
 int main(void) {
     
@@ -64,12 +63,12 @@ int main(void) {
     /* Let's set up our UART */    
     InitUART2();
     ADC_init();
+    StateInit();
+    IOinit();
     newClk(500);
     
     while(1) {
-        delay_ms(500);
-        ADCvalue = do_ADC();
-        Disp2Dec(ADCvalue);
+        IOcheck();
     }
     
     return 0;

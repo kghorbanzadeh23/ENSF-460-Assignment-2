@@ -15,4 +15,8 @@ void IOinit();
 void IOcheck();
 void sendMessage();
 void StateInit();
+void ShutOffTimers();
+void SetPWM();
+void IdleCheck();
+void ResetClicked();
 #endif // TIMEDELAY_H

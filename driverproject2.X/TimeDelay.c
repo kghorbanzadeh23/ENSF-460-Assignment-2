@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "TimeDelay.h"
-
+uint8_t delay_flag = 0;
 
 void delay_ms(uint16_t time_ms){
     
@@ -36,13 +36,16 @@ void delay_ms(uint16_t time_ms){
         PR2 = (time_ms * 3.906);// Calculate count value for timer
     }
     TMR2 = 0;   //Set the timer2 flag to 1
-
+    delay_flag = 0;
     T2CONbits.TON = 1;          // Enable timer 2
-    Idle();    //Run until timer interrupt
+    while(!delay_flag){
+            Idle();    //Run until timer interrupt
+    }
 }
 
 // Timer 2 interrupt subroutine
 void __attribute__((interrupt, no_auto_psv)) _T2Interrupt(void){
+    delay_flag = 1;
     IFS0bits.T2IF = 0;  //Clear Flag
     T2CONbits.TON = 0;  //Disable Timer2
 }
