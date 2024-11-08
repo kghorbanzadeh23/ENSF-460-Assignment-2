@@ -33,7 +33,7 @@ void delay_ms(uint16_t time_ms){
         PR2 = time_ms * 250;  // Calculate count for 1ms
     }   
     else{
-        PR2 = (time_ms * 3.906);// Calculate count value for timer
+        PR2 = (time_ms * 62.5);// Calculate count value for timer
     }
     TMR2 = 0;   //Set the timer2 flag to 1
     Delay_Flag = 0;

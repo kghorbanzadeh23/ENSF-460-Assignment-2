@@ -19,7 +19,7 @@
 #define PB2 PORTBbits.RB4
 #define PB3 PORTAbits.RA4
 #define LEDOUT LATBbits.LATB8
-#define PWMCYCLE 500
+#define PWMCYCLE 8000
 
 typedef enum{
     OFFMODE,   
@@ -173,7 +173,7 @@ void IOcheck(){
             IdleCheck();
             
             if(PB1Clicked){
-                newClk(500);
+                newClk(8);
                 ADCvalue = do_ADC();
                 brightness = ADCvalue * 0.0009766;
                 SetPWM();
@@ -182,7 +182,7 @@ void IOcheck(){
                 break;
             }
             else if(PB2Clicked){
-                newClk(500);
+                newClk(8);
                 state = OFFMODEBLINKING;
                 ResetClicked();
                 break;

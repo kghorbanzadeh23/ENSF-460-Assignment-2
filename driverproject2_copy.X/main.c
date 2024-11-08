@@ -65,7 +65,6 @@ int main(void) {
     ADC_init();
     StateInit();
     IOinit();
-    newClk(500);
     
     while(1) {
         IOcheck();
