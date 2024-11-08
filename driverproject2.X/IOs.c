@@ -27,6 +27,7 @@ typedef enum{
     ONMODEBLINKING,
     OFFMODEBLINKING
 } states_t;
+char message[15];
 
 uint8_t PB1Pressed = 0;
 uint8_t PB2Pressed = 0;
@@ -36,13 +37,13 @@ uint8_t PB1Clicked = 0;
 uint8_t PB2Clicked = 0;
 uint8_t PB3Clicked = 0;
 
+uint8_t UARTtransfer = 0;
+uint8_t percent = 0;
+
 extern int Delay_Flag;
 states_t state; //Keeps track of state
 uint16_t ADCvalue;
-uint16_t previousADCvalue = 1;
-double brightness = 0;
-uint16_t PWMOnTime = 0;
-uint16_t PWMOffTime = 0;
+float brightness = 0;
 
 void IOinit(){
     
@@ -75,12 +76,6 @@ void StateInit(){
     
 }
 
-void sendMessage(char* message){
-    char clear[61] = "\033[2J \033[H "; //Clears terminal
-    strcat(clear, message);             //Add on message after clear
-    Disp2String(clear);                 //Display whole message
-}
-
 void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){    
     IFS1bits.CNIF = 0;     //Clear the CN interrupt flag
 
@@ -103,6 +98,7 @@ void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
         PB2Clicked = 1;
     }
     if(PB3 && PB3Pressed){
+        PB3Pressed = 0;
         PB3Clicked = 1;
     }
 }
@@ -173,8 +169,6 @@ void IOcheck(){
             newClk(32);
             LEDOUT = 0;  
             ShutOffTimers();
-            ADCvalue = do_ADC();
-            Disp2Dec(ADCvalue);
 
             IdleCheck();
             
@@ -197,9 +191,13 @@ void IOcheck(){
         case ONMODE:
             ADCvalue = do_ADC();
             brightness = ADCvalue * 0.0009766;
-            Disp2Dec(PR3);
+
             IdleCheck();
-            
+            if(UARTtransfer){
+                percent = brightness * 100;
+                sprintf(message, "%d.%d \n", ADCvalue, percent);  //Put ADC value in a string with correct formatting
+                Disp2String(message);
+            }
             if(PB1Clicked){
                 state = OFFMODE;
                 ShutOffTimers();
@@ -208,6 +206,11 @@ void IOcheck(){
             }
             else if(PB2Clicked){
                 state = ONMODEBLINKING;
+                ResetClicked();
+                break;
+            }
+            else if(PB3Clicked){
+                UARTtransfer = !UARTtransfer;
                 ResetClicked();
                 break;
             }
@@ -223,6 +226,16 @@ void IOcheck(){
             }
             delay_ms(500);
             while(!Delay_Flag && !PB1Clicked && !PB2Clicked && !PB3Clicked){
+                if(brightness){
+                    ADCvalue = do_ADC();
+                    brightness = ADCvalue * 0.0009766;
+                    
+
+                }
+                if(UARTtransfer){
+                    sprintf(message, "%d.%d \n", ADCvalue, brightness*100);  //Put ADC value in a string with correct formatting
+                    Disp2String(message);
+                }
                 IdleCheck();
             }
             
@@ -243,6 +256,12 @@ void IOcheck(){
             else if(PB2Clicked){
                 state = ONMODE;
                 ResetClicked();
+                break;
+            }
+            else if(PB3Clicked){
+                UARTtransfer = !UARTtransfer;
+                ResetClicked();
+                break;
             }
             break;
         case OFFMODEBLINKING:
