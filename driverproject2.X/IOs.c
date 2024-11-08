@@ -36,7 +36,7 @@ uint8_t PB1Clicked = 0;
 uint8_t PB2Clicked = 0;
 uint8_t PB3Clicked = 0;
 
-
+extern int Delay_Flag;
 states_t state; //Keeps track of state
 uint16_t ADCvalue;
 uint16_t previousADCvalue = 1;
@@ -123,8 +123,6 @@ void IdleCheck(){
 
 
 void SetPWM(){
-    
-    
     //T3CON config
     T2CONbits.T32 = 0; // operate timer 2 as 16 bit timer
     T3CONbits.TCKPS = 1; // set prescaler to 1:8
@@ -133,9 +131,13 @@ void SetPWM(){
     IPC2bits.T3IP = 2; //7 is highest and 1 is lowest pri.
     IFS0bits.T3IF = 0;
     IEC0bits.T3IE = 1; //enable timer interrupt
-    PR3 = (PWMCYCLE * (ADCvalue * 0.0009766)) + 1; // set the count value for 1 s (or 1000 ms)
+    if(LEDOUT){
+        PR3 = (PWMCYCLE * (ADCvalue * 0.0009766)) + 1; // set the count value for 1 s (or 1000 ms)
+    }
+    else{
+        PR3 = (PWMCYCLE * (1 - (ADCvalue * 0.0009766))) + 1; // set the count value for 1 s (or 1000 ms)
+    }
     TMR3 = 0;
-    LEDOUT = 1;
 
     T3CONbits.TON = 1;  //Enable timer
 }
@@ -168,6 +170,7 @@ void IOcheck(){
     
     switch(state){
         case OFFMODE:
+            newClk(32);
             LEDOUT = 0;  
             ShutOffTimers();
             ADCvalue = do_ADC();
@@ -176,6 +179,7 @@ void IOcheck(){
             IdleCheck();
             
             if(PB1Clicked){
+                newClk(500);
                 ADCvalue = do_ADC();
                 brightness = ADCvalue * 0.0009766;
                 SetPWM();
@@ -184,6 +188,7 @@ void IOcheck(){
                 break;
             }
             else if(PB2Clicked){
+                newClk(500);
                 state = OFFMODEBLINKING;
                 ResetClicked();
                 break;
@@ -209,8 +214,6 @@ void IOcheck(){
             
             break;
         case ONMODEBLINKING:
-            Disp2Dec(ADCvalue);
-
             if(brightness == 0){
                 ADCvalue = do_ADC();
                 brightness = ADCvalue * 0.0009766;
@@ -219,11 +222,22 @@ void IOcheck(){
                 brightness = 0;
             }
             delay_ms(500);
+            while(!Delay_Flag && !PB1Clicked && !PB2Clicked && !PB3Clicked){
+                IdleCheck();
+            }
             
             if(PB1Clicked){
                 state = OFFMODEBLINKING;
                 ShutOffTimers();
                 ResetClicked();
+                
+                if(brightness == 0)
+                {
+                    LEDOUT = 1;
+                }
+                else{
+                    LEDOUT = 0;
+                }
 
             }
             else if(PB2Clicked){
@@ -235,10 +249,18 @@ void IOcheck(){
             
             LEDOUT = !LEDOUT;
             delay_ms(500);
-            
+            while(!Delay_Flag && !PB1Clicked && !PB2Clicked && !PB3Clicked){
+                IdleCheck();
+            }
             if(PB1Clicked){
                 state = ONMODEBLINKING;
                 SetPWM();
+                if(LEDOUT){
+                    brightness = 1;
+                }
+                else{
+                    brightness = 0;
+                }
                 ResetClicked();
             }
             else if(PB2Clicked){
