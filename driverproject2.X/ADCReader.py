@@ -56,31 +56,22 @@ while(time.time() - startTime < 5):  #record data for 1 sec
 ## CLOSE SERIAL PORT    
 ser.close()  # close any open serial ports
 
-rxStr = rxADCStr #checks
-# print(rxStr)
-# print(rxADCStr)  
-# print(rxTimesList)
-
 
 ### Rx DATA CLEANUP AND STRING TO FLOAT CONVERSION
 ### Rx DATA CLEANUP AND STRING TO FLOAT CONVERSION
 rxADCStr = rxADCStr.replace('\x00', '')  # Remove null characters
-rxADCStr = rxADCStr.strip()  # Remove unwanted chars and spaces 
 
+lines = rxADCStr.strip().split('\n')
 
-split_rx = rxADCStr.split(' /n')  # Split string by '.' to separate numbers
-split_rx = rxADCStr.split('.')  # Split string by '.' to separate numbers
-
-
-# Assign every first value to rxADCList and every second to IntensityList
-rxADCList = [int(split_rx[i]) for i in range(0, len(split_rx), 2)]
-IntensityList = [int(split_rx[i]) * 3 / (2 ** 10) for i in range(1, len(split_rx), 2)]
+for line in lines:
+    if line:  # Ensure the line is not empty
+        parts = line.split('.')
+        if len(parts) == 2:
+            rxADCList.append(int(parts[0]))
+            IntensityList.append(int(parts[1]))
 
 print(rxADCList)
 print(IntensityList)
-
-print(len(rxTimesList))
-print(len(rxADCList))
 
 ### CONVERT Rx DATA INTO DATA FRAME
 dF = pd.DataFrame()
