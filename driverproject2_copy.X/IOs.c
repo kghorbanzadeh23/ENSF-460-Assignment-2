@@ -19,7 +19,8 @@
 #define PB2 PORTBbits.RB4
 #define PB3 PORTAbits.RA4
 #define LEDOUT LATBbits.LATB8
-#define PWMCYCLE 8000
+#define PWMCYCLE 10000
+#define UARTTimeout 40000
 
 typedef enum{
     OFFMODE,   
@@ -32,7 +33,7 @@ char message[15];
 uint8_t PB1Pressed = 0;
 uint8_t PB2Pressed = 0;
 uint8_t PB3Pressed = 0;
-
+uint16_t UARTTimer = 0;
 uint8_t PB1Clicked = 0;
 uint8_t PB2Clicked = 0;
 uint8_t PB3Clicked = 0;
@@ -117,6 +118,13 @@ void IdleCheck(){
 
 }
 
+void AddToUARTTimer(uint8_t timeAdd){
+    UARTTimer += timeAdd;
+    if(UARTTimer >= UARTTimeout){
+        UARTtransfer = 0;
+        UARTTimer = 0;
+    }    
+}
 
 void SetPWM(){
     //T3CON config
@@ -174,8 +182,6 @@ void IOcheck(){
             
             if(PB1Clicked){
                 newClk(8);
-                ADCvalue = do_ADC();
-                brightness = ADCvalue * 0.0009766;
                 SetPWM();
                 state = ONMODE;
                 ResetClicked();
@@ -193,11 +199,7 @@ void IOcheck(){
             brightness = ADCvalue * 0.0009766;
 
             IdleCheck();
-            if(UARTtransfer){
-                percent = brightness * 100;
-                sprintf(message, "%d.%d \n", ADCvalue, percent);  //Put ADC value in a string with correct formatting
-                Disp2String(message);
-            }
+
             if(PB1Clicked){
                 state = OFFMODE;
                 ShutOffTimers();
@@ -211,8 +213,15 @@ void IOcheck(){
             }
             else if(PB3Clicked){
                 UARTtransfer = !UARTtransfer;
+                UARTTimer = 0;
                 ResetClicked();
                 break;
+            }
+            else if(UARTtransfer){
+                percent = brightness * 100;
+                sprintf(message, "%d.%d \n", ADCvalue, percent);  //Put ADC value in a string with correct formatting
+                Disp2String(message);
+                AddToUARTTimer(15);
             }
             
             break;
@@ -233,7 +242,8 @@ void IOcheck(){
 
                 }
                 if(UARTtransfer){
-                    sprintf(message, "%d.%d \n", ADCvalue, brightness*100);  //Put ADC value in a string with correct formatting
+                    percent = brightness * 100;
+                    sprintf(message, "%d.%d \n", ADCvalue, percent);  //Put ADC value in a string with correct formatting
                     Disp2String(message);
                 }
                 IdleCheck();
@@ -260,8 +270,12 @@ void IOcheck(){
             }
             else if(PB3Clicked){
                 UARTtransfer = !UARTtransfer;
+                UARTTimer = 0;
                 ResetClicked();
                 break;
+            }
+            else if(UARTtransfer){
+                AddToUARTTimer(250);
             }
             break;
         case OFFMODEBLINKING:

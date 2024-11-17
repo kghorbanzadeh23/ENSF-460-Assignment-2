@@ -19,4 +19,5 @@ void ShutOffTimers();
 void SetPWM();
 void IdleCheck();
 void ResetClicked();
+void AddToUARTTimer(uint8_t timeAdd);
 #endif // TIMEDELAY_H

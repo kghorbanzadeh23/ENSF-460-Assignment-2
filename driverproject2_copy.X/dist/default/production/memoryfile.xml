@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project>
-  <executable name="dist/default/production/driverproject2.X.production.elf">
+  <executable name="dist/default/production/driverproject2_copy.X.production.elf">
     <memory name="data">
       <units>bytes</units>
       <length>1536</length>
-      <used>94</used>
-      <free>1442</free>
+      <used>96</used>
+      <free>1440</free>
     </memory>
     <memory name="program">
       <units>bytes</units>
       <length>16128</length>
-      <used>15036</used>
-      <free>1092</free>
+      <used>15090</used>
+      <free>1038</free>
     </memory>
   </executable>
 </project>

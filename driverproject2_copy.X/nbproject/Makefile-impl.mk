@@ -24,7 +24,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=driverproject2.X
+PROJECTNAME=driverproject2_copy.X
 
 # Active Configuration
 DEFAULTCONF=default
