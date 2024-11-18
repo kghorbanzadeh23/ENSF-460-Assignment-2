@@ -15,6 +15,7 @@
 #include "UART.h"
 #include "ADC.h"
 
+//Define for easier readability and changes
 #define PB1 PORTAbits.RA2 
 #define PB2 PORTBbits.RB4
 #define PB3 PORTAbits.RA4
@@ -22,29 +23,33 @@
 #define PWMCYCLE 10000
 #define UARTTimeout 40000
 
+//Different states for our program
 typedef enum{
-    OFFMODE,   
-    ONMODE,
-    ONMODEBLINKING,
-    OFFMODEBLINKING
+    OFFMODE, //LED is off  
+    ONMODE,     //LED is On according to the ADC value
+    ONMODEBLINKING, //LED is blinking while the brightness is related to ADC value
+    OFFMODEBLINKING //100% brightness blinking
 } states_t;
-char message[15];
+//Global variables
+char message[15];   //To hold the message to send over UART
 
-uint8_t PB1Pressed = 0;
+uint8_t PB1Pressed = 0;     //To check which buttons were pressed
 uint8_t PB2Pressed = 0;
 uint8_t PB3Pressed = 0;
-uint16_t UARTTimer = 0;
-uint8_t PB1Clicked = 0;
+
+uint8_t PB1Clicked = 0;     //To check which ones were clicked
 uint8_t PB2Clicked = 0;
 uint8_t PB3Clicked = 0;
 
-uint8_t UARTtransfer = 0;
-uint8_t percent = 0;
+uint16_t UARTTimer = 0;     //Counter for the UART timeout
 
-extern int Delay_Flag;
+uint8_t UARTtransfer = 0;   //Flag for UARTtransfer
+uint8_t percent = 0;        //Hold percent value
+
+extern int Delay_Flag;      //Delay flag from TimeDelay.c
 states_t state; //Keeps track of state
-uint16_t ADCvalue;
-float brightness = 0;
+uint16_t ADCvalue;  //Holds ADC value
+float brightness = 0;   //hold brightness value
 
 void IOinit(){
     
@@ -104,25 +109,25 @@ void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
     }
 }
 
-void ResetClicked(){
+void ResetClicked(){    //Resets all the clicked variables
     PB1Clicked = 0;
     PB2Clicked = 0;
     PB3Clicked = 0;
 }
 
-void IdleCheck(){
-    Idle();
-    if(PB1Pressed || PB2Pressed || PB3Pressed){
+void IdleCheck(){   //Does the right amount of Idle's depending on the event
+    Idle();     //Default Idle 
+    if(PB1Pressed || PB2Pressed || PB3Pressed){ //To check for the click with another idle if any of the push buttons is pressed
         Idle();
     }
 
 }
 
-void AddToUARTTimer(uint8_t timeAdd){
-    UARTTimer += timeAdd;
-    if(UARTTimer >= UARTTimeout){
-        UARTtransfer = 0;
-        UARTTimer = 0;
+void AddToUARTTimer(uint8_t timeAdd){   //Add time to the counter to be able to stop the transfer
+    UARTTimer += timeAdd;   //Add to the counter
+    if(UARTTimer >= UARTTimeout){   //Check if it reaches the timeout number
+        UARTtransfer = 0;           //Turn off the transfer
+        UARTTimer = 0;              //Reset timer counter
     }    
 }
 
@@ -135,11 +140,11 @@ void SetPWM(){
     IPC2bits.T3IP = 2; //7 is highest and 1 is lowest pri.
     IFS0bits.T3IF = 0;
     IEC0bits.T3IE = 1; //enable timer interrupt
-    if(LEDOUT){
-        PR3 = (PWMCYCLE * (ADCvalue * 0.0009766)) + 1; // set the count value for 1 s (or 1000 ms)
+    if(LEDOUT){ //If LED is on
+        PR3 = (PWMCYCLE * (ADCvalue * 0.0009766)) + 1; // set the PR3 value for the time it is on
     }
-    else{
-        PR3 = (PWMCYCLE * (1 - (ADCvalue * 0.0009766))) + 1; // set the count value for 1 s (or 1000 ms)
+    else{ //If LED is off
+        PR3 = (PWMCYCLE * (1 - (ADCvalue * 0.0009766))) + 1; // set PR3 value for the time it is off
     }
     TMR3 = 0;
 
@@ -151,154 +156,153 @@ void __attribute__((interrupt, no_auto_psv)) _T3Interrupt(void){
     //Don't forget to clear the timer 3 interrupt flag!
     IFS0bits.T3IF = 0;  //Clear flag
     T3CONbits.TON = 0;  //Disable Timer3
-    if(LEDOUT || brightness == 0){
-        LEDOUT = 0;
-        PR3 = (PWMCYCLE * (1 - brightness)) + 1;
+    if(LEDOUT || brightness == 0){  //If the LED is on or brightness is zero
+        LEDOUT = 0;                 //Turn LED off
+        PR3 = (PWMCYCLE * (1 - brightness)) + 1;    //Calculate time the LED is off
         
     }
     else if(!LEDOUT){
-        LEDOUT = 1;
-        PR3 = PWMCYCLE * brightness + 1;
+        LEDOUT = 1; //Turn LED on
+        PR3 = PWMCYCLE * brightness + 1;            //Calculate time the LED is on
     }
-    TMR3 = 0;
+    TMR3 = 0;           //Reset TMR3 counter
     T3CONbits.TON = 1;  //Enable Timer3
 }
 
 
 void ShutOffTimers(){
-    T3CONbits.TON = 0;  //Enable timer
-    T2CONbits.TON = 0;
+    T3CONbits.TON = 0;  //Disable timer 3
+    T2CONbits.TON = 0;  //Disable timer 2
 }
 
 void IOcheck(){
     
     switch(state){
         case OFFMODE:
-            newClk(32);
-            LEDOUT = 0;  
-            ShutOffTimers();
+            newClk(32); //Set clock to 32 kHz
+            LEDOUT = 0;  //Turn LED off
+            ShutOffTimers();    //Shut all timers off 
 
-            IdleCheck();
+            IdleCheck();    //Idle until button click
             
-            if(PB1Clicked){
-                newClk(8);
-                SetPWM();
-                state = ONMODE;
-                ResetClicked();
+            if(PB1Clicked){ //Checks if PB1 is clicked
+                newClk(8);  //Set clock to 8 GHz
+                SetPWM();   //Turn on PWM
+                state = ONMODE; //Change state to ONMODE
+                ResetClicked(); //Reset the click variables
                 break;
             }
-            else if(PB2Clicked){
-                newClk(8);
-                state = OFFMODEBLINKING;
+            else if(PB2Clicked){    //Check if PB2 is clicked
+                newClk(8);          //Set clock to 8 GHz
+                state = OFFMODEBLINKING;    //Change state to OFFMODEBLINKING
                 ResetClicked();
                 break;
             }
             break;
-        case ONMODE:
-            ADCvalue = do_ADC();
-            brightness = ADCvalue * 0.0009766;
+        case ONMODE:    //Relates ADC value to LED brightness
+            ADCvalue = do_ADC();        //Grab ADC value
+            brightness = ADCvalue * 0.0009766;  //Find the brightness value
 
-            IdleCheck();
+            IdleCheck();    //Idle here until interrupt
 
-            if(PB1Clicked){
-                state = OFFMODE;
-                ShutOffTimers();
-                ResetClicked();
+            if(PB1Clicked){ //Check PB1Clicked
+                state = OFFMODE;    //Change the state to OFFMODE
+                ShutOffTimers();    //Shut off all the timers
+                ResetClicked();     //Reset click variables
                 break;
             }
             else if(PB2Clicked){
-                state = ONMODEBLINKING;
+                state = ONMODEBLINKING; //Change the state to ONMODEBLINKING
                 ResetClicked();
                 break;
             }
             else if(PB3Clicked){
-                UARTtransfer = !UARTtransfer;
-                UARTTimer = 0;
-                ResetClicked();
+                UARTtransfer = !UARTtransfer;   //Enable or disable UARTtransfer
+                UARTTimer = 0;                  //Reset Timer Counter
+                ResetClicked(); 
                 break;
             }
-            else if(UARTtransfer){
-                percent = brightness * 100;
-                sprintf(message, "%d.%d \n", ADCvalue, percent);  //Put ADC value in a string with correct formatting
-                Disp2String(message);
-                AddToUARTTimer(15);
+            else if(UARTtransfer){  //Do UART transfers
+                percent = brightness * 100; //Find percent to send over UART 
+                sprintf(message, "%d.%d \n", ADCvalue, percent);  //Put ADC and percent value in a string with correct formatting
+                Disp2String(message);   //Send over UART
+                AddToUARTTimer(15);     //Add to counter
             }
             
             break;
-        case ONMODEBLINKING:
-            if(brightness == 0){
+        case ONMODEBLINKING: //Blinking LED while reading from ADC value
+            if(brightness == 0){    //If the LED off turn it on
                 ADCvalue = do_ADC();
                 brightness = ADCvalue * 0.0009766;
             }
-            else{
+            else{                   //If the LED was ON turn it off
                 brightness = 0;
             }
-            delay_ms(500);
-            while(!Delay_Flag && !PB1Clicked && !PB2Clicked && !PB3Clicked){
-                if(brightness){
-                    ADCvalue = do_ADC();
-                    brightness = ADCvalue * 0.0009766;
-                    
-
+            delay_ms(500);          //Delay for 500ms
+            while(!Delay_Flag && !PB1Clicked && !PB2Clicked && !PB3Clicked){    //Only continue if delay is finished or PB is clicked
+                if(brightness){ //If brightness is active check the value
+                    ADCvalue = do_ADC();    //Grab ADC value
+                    brightness = ADCvalue * 0.0009766;  //Calculate brightness value 
                 }
-                if(UARTtransfer){
-                    percent = brightness * 100;
-                    sprintf(message, "%d.%d \n", ADCvalue, percent);  //Put ADC value in a string with correct formatting
-                    Disp2String(message);
+
+                if(UARTtransfer){   //Check if UART transfer is active
+                    percent = brightness * 100; //Calc percent value
+                    sprintf(message, "%d.%d \n", ADCvalue, percent);  //Put ADC and Percent value in a string with correct formatting
+                    Disp2String(message);   //Send string over UART
                 }
                 IdleCheck();
             }
             
-            if(PB1Clicked){
-                state = OFFMODEBLINKING;
-                ShutOffTimers();
-                ResetClicked();
+            if(PB1Clicked){     //Check if PB1 is clicked
+                state = OFFMODEBLINKING;    //Go to OFF MODE BLINKING
+                ShutOffTimers();            //Shut off all the timers
+                ResetClicked();             //Reset the clicked variables
                 
-                if(brightness == 0)
+                if(brightness == 0)         //Check if the LED was off or on during the blinking
                 {
-                    LEDOUT = 1;
+                    LEDOUT = 1;             //Turn it on if it was off
                 }
                 else{
-                    LEDOUT = 0;
+                    LEDOUT = 0;             //Turn it off if it was on
                 }
 
             }
-            else if(PB2Clicked){
-                state = ONMODE;
+            else if(PB2Clicked){    //Check if PB2 is clicked
+                state = ONMODE;     //Change state to ONMODE
                 ResetClicked();
                 break;
             }
-            else if(PB3Clicked){
-                UARTtransfer = !UARTtransfer;
-                UARTTimer = 0;
-                ResetClicked();
+            else if(PB3Clicked){    //Check if PB3 is clicked
+                UARTtransfer = !UARTtransfer;   //Turn on or off the UARTtransfer
+                UARTTimer = 0;                  //Reset counter
+                ResetClicked();                 //Reset clicked variables
                 break;
             }
-            else if(UARTtransfer){
-                AddToUARTTimer(250);
+            else if(UARTtransfer){      //If the UARTtransfer is active
+                AddToUARTTimer(250);    //Add to Counter
             }
             break;
-        case OFFMODEBLINKING:
+        case OFFMODEBLINKING:   //To handle regular blinking at 100% brightness
             
-            LEDOUT = !LEDOUT;
-            delay_ms(500);
-            while(!Delay_Flag && !PB1Clicked && !PB2Clicked && !PB3Clicked){
+            LEDOUT = !LEDOUT;   //Turn off and on the LED
+            delay_ms(500);      //Delay for 500ms
+            while(!Delay_Flag && !PB1Clicked && !PB2Clicked && !PB3Clicked){    //Stay here until button clicked or delay is done
                 IdleCheck();
             }
-            if(PB1Clicked){
-                state = ONMODEBLINKING;
-                SetPWM();
-                if(LEDOUT){
-                    brightness = 1;
+            if(PB1Clicked){ //Check is PB1 is clicked
+                state = ONMODEBLINKING; //Change state to ON MODE BLINKING
+                SetPWM();   //Turn on the PWM
+                if(LEDOUT){ //If the LED is on
+                    brightness = 1; //Make sure the LED stays on
                 }
                 else{
-                    brightness = 0;
+                    brightness = 0; //Make sure the LED turns off
                 }
                 ResetClicked();
             }
-            else if(PB2Clicked){
-                state = OFFMODE;
-                ShutOffTimers();
+            else if(PB2Clicked){    //If PB2 Clicked
+                state = OFFMODE;    //Go to OFF MODE
+                ShutOffTimers();    //Turn off all timers
                 ResetClicked();
             }
             

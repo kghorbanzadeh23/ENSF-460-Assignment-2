@@ -1,16 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group>
-            <file>file:/C:/gitrepo/ENSF-460-Assignment-2/driverproject2.X/IOs.c</file>
-            <file>file:/C:/gitrepo/ENSF-460-Assignment-2/driverproject2.X/IOs.h</file>
-            <file>file:/C:/gitrepo/ENSF-460-Assignment-2/driverproject2.X/ADC.c</file>
-            <file>file:/C:/gitrepo/ENSF-460-Assignment-2/driverproject2.X/ADC.h</file>
-            <file>file:/C:/gitrepo/ENSF-460-Assignment-2/driverproject2.X/UART.h</file>
-            <file>file:/C:/gitrepo/ENSF-460-Assignment-2/driverproject2.X/main.c</file>
-            <file>file:/C:/gitrepo/ENSF-460-Assignment-2/driverproject2.X/TimeDelay.h</file>
-            <file>file:/C:/gitrepo/ENSF-460-Assignment-2/driverproject2.X/TimeDelay.c</file>
-            <file>file:/C:/gitrepo/ENSF-460-Assignment-2/driverproject2.X/clkChange.c</file>
-        </group>
+        <group/>
     </open-files>
 </project-private>
