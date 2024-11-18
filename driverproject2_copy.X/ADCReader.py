@@ -31,7 +31,7 @@ pio.renderers.default = 'browser' # to plot plotly graphs in browser
 
 
 ## OPEN SERIAL PORT 
-ser = serial.Serial(port= "COM4", baudrate = 9600, bytesize = 8, timeout =2, stopbits = serial.STOPBITS_ONE)
+ser = serial.Serial(port= "COM5", baudrate = 9600, bytesize = 8, timeout =2, stopbits = serial.STOPBITS_ONE)
 
 
 ## INITIALIZATIONS
@@ -49,7 +49,6 @@ while(time.time() - startTime < 5):  #record data for 1 sec
         timeMeas = time.time() -startTime # Time stamp received number
         rxTimesList.append(timeMeas) #save time stamps in a list
         print(rxADCStr)
-        # print(rxTimesList)
 
         
 
@@ -70,9 +69,6 @@ for line in lines:
             rxADCList.append(int(parts[0]))
             IntensityList.append(int(parts[1]))
 
-# print(rxADCList)
-# print(IntensityList)
-
 ### CONVERT Rx DATA INTO DATA FRAME
 dF = pd.DataFrame()
 dF['Rx Time (sec)'] = rxTimesList
@@ -86,34 +82,44 @@ dF2['Rx Intensity'] = IntensityList
 # print(dF.describe())
 # print(dF2.describe())
 
-
 ### COPY RX VOLTAGE AND RX TIME IN CSV AND XLS FILES
-dF.to_csv('RxDataFloat.csv', index = True)
-dF2.to_csv('RxDataFloat2.csv', index = True)
-
-# dF.to_excel('RxDataFloat.xlsx', sheet_name='New Sheet')
-
-fig = make_subplots(rows=1, cols=2)
-
-fig.add_trace(
-    go.Scatter(x=dF['Rx Time (sec)'],y=dF['ADC Value'], dx = 1, dy = 1) 
-    
+combined_df = pd.merge(
+    dF[['Rx Time (sec)', 'ADC Value']],
+    dF2[['Rx Time (sec)', 'Rx Intensity']],
+    on='Rx Time (sec)',
+    how='inner'  # Inner join ensures only matching times are included
 )
 
-
-fig.add_trace(
-    go.Scatter(x=dF2['Rx Time (sec)'], y=dF2['Rx Intensity'],  dx = 1, dy = 2)
+# Rename columns for clarity
+combined_df.rename(
+    columns={
+        'Rx Time (sec)': 'Time (sec)',
+        'ADC Value': 'ADC Reading',
+        'Rx Intensity': 'Intensity (Duty Cycle %)'
+    }, 
+    inplace=True
 )
 
+# Save the combined dataframe to a CSV file
+combined_df.to_csv('Test_Run_Data.csv', index=False)
 
+fig = make_subplots(rows=1, cols=2, subplot_titles=("ADC Reading (Raw)", "LED Intensity"))
 
-### PLOT Rx VOLTAGE VS Rx TIME
-# fig = px.line(dF, x='Rx Time (sec)', y='ADC Value', title = 'ADC vs Time')
-# fig2 = px.line(dF2, x='Rx Time (sec)', y='Rx Intensity', title = 'Intensity vs Time')
+trace1 = go.Scatter(x=dF['Rx Time (sec)'],y=dF['ADC Value'], name="ADC Reading (Raw)") 
+trace2 = go.Scatter(x=dF2['Rx Time (sec)'], y=dF2['Rx Intensity'], name="LED Intensity")
 
-fig.update_layout(height = 600, width = 800, title_text = "2 Subplots")
+fig.add_trace(trace1, row=1, col=1)
+fig.add_trace(trace2, row=1, col=2)
+
+fig.update_layout(height = 720, width = 1400, title_text = "Side by Side Subplots")
+
+# Update axis labels for each subplot
+fig.update_xaxes(title_text="Time (sec)", row=1, col=1)
+fig.update_yaxes(title_text="ADC Reading", row=1, col=1)
+
+fig.update_xaxes(title_text="Time (sec)", row=1, col=2)
+fig.update_yaxes(title_text="Intensity (Duty Cycle %)", row=1, col=2)
 
 fig.show()
-# fig2.show()
-# fig.write_image("image1.png")
+
 
