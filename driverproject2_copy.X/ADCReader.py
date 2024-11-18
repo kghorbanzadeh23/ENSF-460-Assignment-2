@@ -26,6 +26,7 @@ import plotly.io as pio
 
 pio.renderers.default = 'browser' # to plot plotly graphs in browser
 
+TimeInterval = 60 # define how long to capture UART data for
 
 ## OPEN SERIAL PORT
 ser = serial.Serial(port= "COM5", baudrate = 9600, bytesize = 8, timeout =2, stopbits = serial.STOPBITS_ONE)
@@ -39,7 +40,7 @@ IntensityList = [] # List to store recieved brightness (intensity) values as a p
 startTime = time.time()   
 
 ## CAPTURE UART DATA
-while(time.time() - startTime < 5):  # record data for 5 sec
+while(time.time() - startTime < TimeInterval):  # record data for x seconds
     line =ser.readline() # reads uint16_t nums as single bytes till \n n stores in string
     if ((line != b' \n') and (line != b'\n')) : # removes any '\n' without num captures
         rxADCStr = rxADCStr + line.decode('Ascii')  # Converts string of received uint16_t num to ASCII and combines Rx nums into 1 string
