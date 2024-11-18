@@ -31,7 +31,7 @@ pio.renderers.default = 'browser' # to plot plotly graphs in browser
 
 
 ## OPEN SERIAL PORT 
-ser = serial.Serial(port= "COM4", baudrate = 4800, bytesize = 8, timeout =2, stopbits = serial.STOPBITS_ONE)
+ser = serial.Serial(port= "COM4", baudrate = 9600, bytesize = 8, timeout =2, stopbits = serial.STOPBITS_ONE)
 
 
 ## INITIALIZATIONS
@@ -70,8 +70,8 @@ for line in lines:
             rxADCList.append(int(parts[0]))
             IntensityList.append(int(parts[1]))
 
-print(rxADCList)
-print(IntensityList)
+# print(rxADCList)
+# print(IntensityList)
 
 ### CONVERT Rx DATA INTO DATA FRAME
 dF = pd.DataFrame()
@@ -83,8 +83,8 @@ dF2['Rx Time (sec)'] = rxTimesList
 dF2['Rx Intensity'] = IntensityList
 
 ### DATA STATISTICS
-print(dF.describe())
-print(dF2.describe())
+# print(dF.describe())
+# print(dF2.describe())
 
 
 ### COPY RX VOLTAGE AND RX TIME IN CSV AND XLS FILES
@@ -96,13 +96,13 @@ dF2.to_csv('RxDataFloat2.csv', index = True)
 fig = make_subplots(rows=1, cols=2)
 
 fig.add_trace(
-    go.Scatter(x=dF['Rx Time (sec)'],y=dF['ADC Value'], row = 1, col = 1)
+    go.Scatter(x=dF['Rx Time (sec)'],y=dF['ADC Value'], dx = 1, dy = 1) 
     
 )
 
 
 fig.add_trace(
-    go.Scatter(x=dF2['Rx Time (sec)'],y=dF2['Rx Intensity'],  row = 1, col = 2)
+    go.Scatter(x=dF2['Rx Time (sec)'], y=dF2['Rx Intensity'],  dx = 1, dy = 2)
 )
 
 
