@@ -20,4 +20,8 @@ void SetPWM();
 void IdleCheck();
 void ResetClicked();
 void AddToUARTTimer(uint8_t timeAdd);
+void OnMode();
+void OffMode();
+void OnModeBlinking();
+void OffModeBlinking();
 #endif // TIMEDELAY_H

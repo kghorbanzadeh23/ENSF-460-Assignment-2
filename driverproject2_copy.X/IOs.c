@@ -2,7 +2,7 @@
  * File:   IOs.c
  * Author: Spiro, Kamand, Hutton
  *
- * Created on October 31, 2024, 10:25 AM
+ * Created on November 4, 2024, 10:25 AM
  */
 
 
@@ -25,10 +25,10 @@
 
 //Different states for our program
 typedef enum{
-    OFFMODE, //LED is off  
-    ONMODE,     //LED is On according to the ADC value
-    ONMODEBLINKING, //LED is blinking while the brightness is related to ADC value
-    OFFMODEBLINKING //100% brightness blinking
+    STATE_OFFMODE, //LED is off  
+    STATE_ONMODE,     //LED is On according to the ADC value
+    STATE_ONMODEBLINKING, //LED is blinking while the brightness is related to ADC value
+    STATE_OFFMODEBLINKING //100% brightness blinking
 } states_t;
 //Global variables
 char message[15];   //To hold the message to send over UART
@@ -175,44 +175,84 @@ void ShutOffTimers(){
     T2CONbits.TON = 0;  //Disable timer 2
 }
 
+void OffMode(){
+    newClk(32); //Set clock to 32 kHz
+    LEDOUT = 0;  //Turn LED off
+    ShutOffTimers();    //Shut all timers off 
+
+    IdleCheck();    //Idle until button click
+}
+
+void OnMode(){
+    ADCvalue = do_ADC();        //Grab ADC value
+    brightness = ADCvalue * 0.0009766;  //Find the brightness value
+
+    IdleCheck();    //Idle here until interrupt
+}
+
+void OffModeBlinking(){            
+    LEDOUT = !LEDOUT;   //Turn off and on the LED
+    delay_ms(500);      //Delay for 500ms
+    while(!Delay_Flag && !PB1Clicked && !PB2Clicked && !PB3Clicked){    //Stay here until button clicked or delay is done
+        IdleCheck();
+    }            
+}
+
+void OnModeBlinking(){
+    if(brightness == 0){    //If the LED off turn it on
+        ADCvalue = do_ADC();
+        brightness = ADCvalue * 0.0009766;
+    }
+    else{                   //If the LED was ON turn it off
+        brightness = 0;
+    }
+    delay_ms(500);          //Delay for 500ms
+    while(!Delay_Flag && !PB1Clicked && !PB2Clicked && !PB3Clicked){    //Only continue if delay is finished or PB is clicked
+        if(brightness){ //If brightness is active check the value
+            ADCvalue = do_ADC();    //Grab ADC value
+            brightness = ADCvalue * 0.0009766;  //Calculate brightness value 
+        }
+
+        if(UARTtransfer){   //Check if UART transfer is active
+            percent = brightness * 100; //Calc percent value
+            sprintf(message, "%d.%d \n", ADCvalue, percent);  //Put ADC and Percent value in a string with correct formatting
+            Disp2String(message);   //Send string over UART
+        }
+        IdleCheck();
+    }
+            
+}
 void IOcheck(){
     
     switch(state){
-        case OFFMODE:
-            newClk(32); //Set clock to 32 kHz
-            LEDOUT = 0;  //Turn LED off
-            ShutOffTimers();    //Shut all timers off 
-
-            IdleCheck();    //Idle until button click
+        case STATE_OFFMODE:
+            OffMode();
             
             if(PB1Clicked){ //Checks if PB1 is clicked
                 newClk(8);  //Set clock to 8 GHz
                 SetPWM();   //Turn on PWM
-                state = ONMODE; //Change state to ONMODE
+                state = STATE_ONMODE; //Change state to ONMODE
                 ResetClicked(); //Reset the click variables
                 break;
             }
             else if(PB2Clicked){    //Check if PB2 is clicked
                 newClk(8);          //Set clock to 8 GHz
-                state = OFFMODEBLINKING;    //Change state to OFFMODEBLINKING
+                state = STATE_OFFMODEBLINKING;    //Change state to OFFMODEBLINKING
                 ResetClicked();
                 break;
             }
             break;
-        case ONMODE:    //Relates ADC value to LED brightness
-            ADCvalue = do_ADC();        //Grab ADC value
-            brightness = ADCvalue * 0.0009766;  //Find the brightness value
-
-            IdleCheck();    //Idle here until interrupt
-
+        case STATE_ONMODE:    //Relates ADC value to LED brightness
+            OnMode();
+            
             if(PB1Clicked){ //Check PB1Clicked
-                state = OFFMODE;    //Change the state to OFFMODE
+                state = STATE_OFFMODE;    //Change the state to OFFMODE
                 ShutOffTimers();    //Shut off all the timers
                 ResetClicked();     //Reset click variables
                 break;
             }
             else if(PB2Clicked){
-                state = ONMODEBLINKING; //Change the state to ONMODEBLINKING
+                state = STATE_ONMODEBLINKING; //Change the state to ONMODEBLINKING
                 ResetClicked();
                 break;
             }
@@ -230,31 +270,10 @@ void IOcheck(){
             }
             
             break;
-        case ONMODEBLINKING: //Blinking LED while reading from ADC value
-            if(brightness == 0){    //If the LED off turn it on
-                ADCvalue = do_ADC();
-                brightness = ADCvalue * 0.0009766;
-            }
-            else{                   //If the LED was ON turn it off
-                brightness = 0;
-            }
-            delay_ms(500);          //Delay for 500ms
-            while(!Delay_Flag && !PB1Clicked && !PB2Clicked && !PB3Clicked){    //Only continue if delay is finished or PB is clicked
-                if(brightness){ //If brightness is active check the value
-                    ADCvalue = do_ADC();    //Grab ADC value
-                    brightness = ADCvalue * 0.0009766;  //Calculate brightness value 
-                }
-
-                if(UARTtransfer){   //Check if UART transfer is active
-                    percent = brightness * 100; //Calc percent value
-                    sprintf(message, "%d.%d \n", ADCvalue, percent);  //Put ADC and Percent value in a string with correct formatting
-                    Disp2String(message);   //Send string over UART
-                }
-                IdleCheck();
-            }
-            
+        case STATE_ONMODEBLINKING: //Blinking LED while reading from ADC value
+            OnModeBlinking();
             if(PB1Clicked){     //Check if PB1 is clicked
-                state = OFFMODEBLINKING;    //Go to OFF MODE BLINKING
+                state = STATE_OFFMODEBLINKING;    //Go to OFF MODE BLINKING
                 ShutOffTimers();            //Shut off all the timers
                 ResetClicked();             //Reset the clicked variables
                 
@@ -282,15 +301,10 @@ void IOcheck(){
                 AddToUARTTimer(250);    //Add to Counter
             }
             break;
-        case OFFMODEBLINKING:   //To handle regular blinking at 100% brightness
-            
-            LEDOUT = !LEDOUT;   //Turn off and on the LED
-            delay_ms(500);      //Delay for 500ms
-            while(!Delay_Flag && !PB1Clicked && !PB2Clicked && !PB3Clicked){    //Stay here until button clicked or delay is done
-                IdleCheck();
-            }
+        case STATE_OFFMODEBLINKING:   //To handle regular blinking at 100% brightness
+            OffModeBlinking();
             if(PB1Clicked){ //Check is PB1 is clicked
-                state = ONMODEBLINKING; //Change state to ON MODE BLINKING
+                state = STATE_ONMODEBLINKING; //Change state to ON MODE BLINKING
                 SetPWM();   //Turn on the PWM
                 if(LEDOUT){ //If the LED is on
                     brightness = 1; //Make sure the LED stays on
@@ -301,7 +315,7 @@ void IOcheck(){
                 ResetClicked();
             }
             else if(PB2Clicked){    //If PB2 Clicked
-                state = OFFMODE;    //Go to OFF MODE
+                state = STATE_OFFMODE;    //Go to OFF MODE
                 ShutOffTimers();    //Turn off all timers
                 ResetClicked();
             }
