@@ -85,7 +85,7 @@ void StateInit(){
 void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){    
     IFS1bits.CNIF = 0;     //Clear the CN interrupt flag
 
-    
+    //Check which PB is pressed
     if(!PB1){
         PB1Pressed = 1;
     }
@@ -95,7 +95,7 @@ void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
     if(!PB3){
         PB3Pressed = 1;
     }
-    if(PB1 && PB1Pressed){
+    if(PB1 && PB1Pressed){  //If PB is not pressed and it was previously pressed
         PB1Pressed = 0;
         PB1Clicked = 1;
     }
@@ -140,11 +140,14 @@ void SetPWM(){
     IPC2bits.T3IP = 2; //7 is highest and 1 is lowest pri.
     IFS0bits.T3IF = 0;
     IEC0bits.T3IE = 1; //enable timer interrupt
+    
+    ADCvalue = do_ADC();
+    brightness = ADCvalue * 0.0009766;
     if(LEDOUT){ //If LED is on
-        PR3 = (PWMCYCLE * (ADCvalue * 0.0009766)) + 1; // set the PR3 value for the time it is on
+        PR3 = (PWMCYCLE * brightness) + 1; // set the PR3 value for the time it is on
     }
     else{ //If LED is off
-        PR3 = (PWMCYCLE * (1 - (ADCvalue * 0.0009766))) + 1; // set PR3 value for the time it is off
+        PR3 = (PWMCYCLE * brightness) + 1; // set PR3 value for the time it is off
     }
     TMR3 = 0;
 
@@ -229,14 +232,14 @@ void IOcheck(){
             OffMode();
             
             if(PB1Clicked){ //Checks if PB1 is clicked
-                newClk(8);  //Set clock to 8 GHz
+                newClk(8);  //Set clock to 8 MHz
                 SetPWM();   //Turn on PWM
                 state = STATE_ONMODE; //Change state to ONMODE
                 ResetClicked(); //Reset the click variables
                 break;
             }
             else if(PB2Clicked){    //Check if PB2 is clicked
-                newClk(8);          //Set clock to 8 GHz
+                newClk(8);          //Set clock to 8 MHz
                 state = STATE_OFFMODEBLINKING;    //Change state to OFFMODEBLINKING
                 ResetClicked();
                 break;
@@ -277,7 +280,7 @@ void IOcheck(){
                 ShutOffTimers();            //Shut off all the timers
                 ResetClicked();             //Reset the clicked variables
                 
-                if(brightness == 0)         //Check if the LED was off or on during the blinking
+                if(!brightness)         //Check if the LED was off or on during the blinking
                 {
                     LEDOUT = 1;             //Turn it on if it was off
                 }
@@ -287,7 +290,7 @@ void IOcheck(){
 
             }
             else if(PB2Clicked){    //Check if PB2 is clicked
-                state = ONMODE;     //Change state to ONMODE
+                state = STATE_ONMODE;     //Change state to ONMODE
                 ResetClicked();
                 break;
             }
@@ -306,7 +309,7 @@ void IOcheck(){
             if(PB1Clicked){ //Check is PB1 is clicked
                 state = STATE_ONMODEBLINKING; //Change state to ON MODE BLINKING
                 SetPWM();   //Turn on the PWM
-                if(LEDOUT){ //If the LED is on
+                if(!LEDOUT){ //If the LED is on
                     brightness = 1; //Make sure the LED stays on
                 }
                 else{

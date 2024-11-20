@@ -12,10 +12,6 @@ uint8_t Delay_Flag = 0;
 
 void delay_ms(uint16_t time_ms){
     
-    if(time_ms > 16778){ 
-        time_ms = 16778;    //If over max amount before overflow set time_ms to that max amount
-    }
-    
     //Timer2 config
     T2CONbits.T32 = 0;      // operate timer 2 as 16 bit timer
     T2CONbits.TCKPS = 2;    // set pre-scaler
@@ -27,22 +23,12 @@ void delay_ms(uint16_t time_ms){
     IFS0bits.T2IF = 0;      // clear interrupt flag
     IEC0bits.T2IE = 1;      // enable timer interrupt
     
+    PR2 = (time_ms * 62.5);// Calculate count value for timer
     
-    if(time_ms <= 200){ //Have a different sections for higher precision in the timer.
-        T2CONbits.TCKPS = 0;    // set pre-scaler for 1ms to be 1:1
-        PR2 = time_ms * 250;  // Calculate count for 1ms
-    }   
-    else{
-        PR2 = (time_ms * 62.5);// Calculate count value for timer
-    }
     TMR2 = 0;   //Set the timer2 flag to 1
     Delay_Flag = 0;
     
     T2CONbits.TON = 1;          // Enable timer 2
-    
-//    while(!Delay_Flag){
-//        Idle();
-//    }
 }
 
 // Timer 2 interrupt subroutine
