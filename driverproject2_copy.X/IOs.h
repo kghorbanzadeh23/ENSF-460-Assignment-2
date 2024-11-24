@@ -24,4 +24,5 @@ void OnMode();
 void OffMode();
 void OnModeBlinking();
 void OffModeBlinking();
+void FindBrightness();
 #endif // TIMEDELAY_H

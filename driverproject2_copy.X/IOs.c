@@ -20,8 +20,8 @@
 #define PB2 PORTBbits.RB4
 #define PB3 PORTAbits.RA4
 #define LEDOUT LATBbits.LATB8
-#define PWMCYCLE 10000
-#define UARTTimeout 40000
+#define PULSEPERIOD 9000
+#define UARTTIMEOUT 40000
 
 //Different states for our program
 typedef enum{
@@ -78,7 +78,7 @@ void IOinit(){
 }
 
 void StateInit(){
-    state = OFFMODE;            
+    state = STATE_OFFMODE;            
     
 }
 
@@ -125,7 +125,7 @@ void IdleCheck(){   //Does the right amount of Idle's depending on the event
 
 void AddToUARTTimer(uint8_t timeAdd){   //Add time to the counter to be able to stop the transfer
     UARTTimer += timeAdd;   //Add to the counter
-    if(UARTTimer >= UARTTimeout){   //Check if it reaches the timeout number
+    if(UARTTimer >= UARTTIMEOUT){   //Check if it reaches the timeout number
         UARTtransfer = 0;           //Turn off the transfer
         UARTTimer = 0;              //Reset timer counter
     }    
@@ -142,13 +142,10 @@ void SetPWM(){
     IEC0bits.T3IE = 1; //enable timer interrupt
     
     ADCvalue = do_ADC();
-    brightness = ADCvalue * 0.0009766;
-    if(LEDOUT){ //If LED is on
-        PR3 = (PWMCYCLE * brightness) + 1; // set the PR3 value for the time it is on
-    }
-    else{ //If LED is off
-        PR3 = (PWMCYCLE * brightness) + 1; // set PR3 value for the time it is off
-    }
+    brightness = ADCvalue * 0.0009775;
+    LEDOUT = 1;
+    PR3 = (PULSEPERIOD * brightness) + 1; // set the PR3 value for the time it is on
+
     TMR3 = 0;
 
     T3CONbits.TON = 1;  //Enable timer
@@ -161,17 +158,25 @@ void __attribute__((interrupt, no_auto_psv)) _T3Interrupt(void){
     T3CONbits.TON = 0;  //Disable Timer3
     if(LEDOUT || brightness == 0){  //If the LED is on or brightness is zero
         LEDOUT = 0;                 //Turn LED off
-        PR3 = (PWMCYCLE * (1 - brightness)) + 1;    //Calculate time the LED is off
+        PR3 = (PULSEPERIOD * (1 - brightness)) + 1;    //Calculate time the LED is off
         
     }
-    else if(!LEDOUT){
+    else if(!LEDOUT || brightness == 1){
         LEDOUT = 1; //Turn LED on
-        PR3 = PWMCYCLE * brightness + 1;            //Calculate time the LED is on
+        PR3 = PULSEPERIOD * brightness + 1;            //Calculate time the LED is on
     }
     TMR3 = 0;           //Reset TMR3 counter
     T3CONbits.TON = 1;  //Enable Timer3
 }
 
+void FindBrightness(){
+    ADCvalue = do_ADC();                //Grab ADC value
+
+    if(ADCvalue == 1023)    //Check if ADC reached max value
+        brightness = 1;  //Set brightness to max brightness
+    else
+        brightness = ADCvalue * 0.0009775;  //Find the brightness value with reciprocal of 1023
+}
 
 void ShutOffTimers(){
     T3CONbits.TON = 0;  //Disable timer 3
@@ -182,14 +187,20 @@ void OffMode(){
     newClk(32); //Set clock to 32 kHz
     LEDOUT = 0;  //Turn LED off
     ShutOffTimers();    //Shut all timers off 
-
+    UARTTimer = 0;
     IdleCheck();    //Idle until button click
 }
 
 void OnMode(){
-    ADCvalue = do_ADC();        //Grab ADC value
-    brightness = ADCvalue * 0.0009766;  //Find the brightness value
+    FindBrightness();
 
+    if(UARTtransfer){  //Do UART transfers
+                percent = brightness * 100; //Find percent to send over UART 
+                sprintf(message, "%d.%d \n", ADCvalue, percent);  //Put ADC and percent value in a string with correct formatting
+                Disp2String(message);   //Send over UART
+                AddToUARTTimer(15);     //Add to counter
+    }    
+    
     IdleCheck();    //Idle here until interrupt
 }
 
@@ -202,18 +213,16 @@ void OffModeBlinking(){
 }
 
 void OnModeBlinking(){
-    if(brightness == 0){    //If the LED off turn it on
-        ADCvalue = do_ADC();
-        brightness = ADCvalue * 0.0009766;
-    }
-    else{                   //If the LED was ON turn it off
+    if(brightness){                   //If the LED was ON turn it off
         brightness = 0;
+    }
+    else{               //If LED was off turn it on again
+        FindBrightness();
     }
     delay_ms(500);          //Delay for 500ms
     while(!Delay_Flag && !PB1Clicked && !PB2Clicked && !PB3Clicked){    //Only continue if delay is finished or PB is clicked
         if(brightness){ //If brightness is active check the value
-            ADCvalue = do_ADC();    //Grab ADC value
-            brightness = ADCvalue * 0.0009766;  //Calculate brightness value 
+            FindBrightness();
         }
 
         if(UARTtransfer){   //Check if UART transfer is active
@@ -265,17 +274,13 @@ void IOcheck(){
                 ResetClicked(); 
                 break;
             }
-            else if(UARTtransfer){  //Do UART transfers
-                percent = brightness * 100; //Find percent to send over UART 
-                sprintf(message, "%d.%d \n", ADCvalue, percent);  //Put ADC and percent value in a string with correct formatting
-                Disp2String(message);   //Send over UART
-                AddToUARTTimer(15);     //Add to counter
-            }
+
             
             break;
         case STATE_ONMODEBLINKING: //Blinking LED while reading from ADC value
             OnModeBlinking();
             if(PB1Clicked){     //Check if PB1 is clicked
+                UARTTimer = 0;
                 state = STATE_OFFMODEBLINKING;    //Go to OFF MODE BLINKING
                 ShutOffTimers();            //Shut off all the timers
                 ResetClicked();             //Reset the clicked variables
